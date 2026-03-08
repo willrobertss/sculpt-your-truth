@@ -11,7 +11,7 @@ interface TestimonialCardProps {
 
 const TestimonialCard = ({ name, role, quote, avatarUrl, rating }: TestimonialCardProps) => {
   return (
-    <div className="bg-card gold-border rounded-sm p-5 flex flex-col gap-3 min-w-[260px] max-w-[300px] flex-shrink-0">
+    <div className="bg-card gold-border rounded-sm p-5 flex flex-col gap-3">
       <div className="flex gap-0.5">
         {Array.from({ length: rating }).map((_, i) => (
           <Star key={i} size={14} className="fill-primary text-primary" />
