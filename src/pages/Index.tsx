@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Input } from '@/components/ui/input';
 import { mockFilms, mockShorts, mockCreators, faqItems } from '@/lib/mock-data';
 import heroImage from '@/assets/hero-filmset.jpg';
+import logo from '@/assets/logo.png';
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -58,9 +59,9 @@ const Index = () => {
 
         <div className="relative z-10 container mx-auto px-6 text-center">
           <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto">
-            <motion.p variants={fadeUp} className="font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-primary mb-6">
-              The Future of Independent Cinema
-            </motion.p>
+            <motion.div variants={fadeUp} className="flex justify-center mb-6">
+              <img src={logo} alt="OPPRIME.tv" className="h-10 md:h-14" />
+            </motion.div>
             <motion.h1 variants={fadeUp} className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-6">
               Where Bold Story Tellers{' '}
               <span className="text-gold-gradient">Find Their Stage</span>

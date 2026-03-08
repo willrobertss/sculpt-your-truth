@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import logo from '@/assets/logo.png';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -42,9 +43,8 @@ const Navbar = () => {
       }`}
     >
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-0 font-display text-2xl font-bold tracking-wider">
-          <span className="text-foreground">OPPRIME</span>
-          <span className="text-primary">.tv</span>
+        <Link to="/" className="flex items-center">
+          <img src={logo} alt="OPPRIME.tv" className="h-8" />
         </Link>
 
         {/* Desktop nav */}
