@@ -1,12 +1,233 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Film, Tv, Upload, Star, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import FilmCard from '@/components/FilmCard';
+import ShortCard from '@/components/ShortCard';
+import CreatorCard from '@/components/CreatorCard';
+import ContentRow from '@/components/ContentRow';
+import GoldButton from '@/components/GoldButton';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Input } from '@/components/ui/input';
+import { mockFilms, mockShorts, mockCreators, faqItems } from '@/lib/mock-data';
+
+const stagger = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] as const } },
+};
 
 const Index = () => {
+  const [email, setEmail] = useState('');
+  const navigate = useNavigate();
+
+  const marqueeText = '★ NEW RELEASES EVERY WEEK ★ INDEPENDENT CINEMA ★ CREATOR-FIRST PLATFORM ★ SHORTS & FEATURES ★ GLOBAL STORYTELLERS ★ ';
+
+  const steps = [
+    { icon: Users, label: 'Create Account', desc: 'Sign up free as a creator' },
+    { icon: Upload, label: 'Upload', desc: 'Submit your film or short' },
+    { icon: Star, label: 'Review', desc: 'Our team curates quality' },
+    { icon: Tv, label: 'Go Live', desc: 'Your work streams globally' },
+    { icon: Film, label: 'Grow', desc: 'Build your audience & earn' },
+  ];
+
+  const valueProps = [
+    { title: 'Creator-First', desc: 'Fair revenue share. You own your content. We amplify it.' },
+    { title: 'Curated Quality', desc: 'Every title is hand-reviewed by our editorial team.' },
+    { title: 'Global Reach', desc: 'Your film, available worldwide from day one.' },
+    { title: 'Zero Fees', desc: 'Free to submit. Free to host. We only earn when you do.' },
+  ];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      {/* ─── HERO ─── */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden film-grain vignette">
+        {/* Poster grid background */}
+        <div className="absolute inset-0 grid grid-cols-4 md:grid-cols-6 gap-1 opacity-15 blur-sm">
+          {[...mockFilms, ...mockFilms].map((film, i) => (
+            <img key={i} src={film.poster_url} alt="" className="w-full h-full object-cover" />
+          ))}
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+
+        <div className="relative z-10 container mx-auto px-6 text-center">
+          <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto">
+            <motion.p variants={fadeUp} className="font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-primary mb-6">
+              The Future of Independent Cinema
+            </motion.p>
+            <motion.h1 variants={fadeUp} className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-6">
+              Where Bold Stories{' '}
+              <span className="text-gold-gradient">Find Their Stage</span>
+            </motion.h1>
+            <motion.p variants={fadeUp} className="font-body text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-10">
+              Stream boundary-pushing features, shorts, and vertical content from the world's most daring independent filmmakers.
+            </motion.p>
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+              <Input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-surface border-border text-foreground placeholder:text-muted-foreground h-12"
+              />
+              <GoldButton size="md" onClick={() => navigate('/login')} className="h-12 whitespace-nowrap">
+                Get Started <ArrowRight size={14} className="ml-2" />
+              </GoldButton>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── GOLD MARQUEE ─── */}
+      <div className="bg-primary/10 border-y border-primary/20 py-3 overflow-hidden">
+        <div className="flex animate-marquee whitespace-nowrap">
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">{marqueeText}{marqueeText}</span>
+        </div>
       </div>
+
+      {/* ─── CONTENT ROWS ─── */}
+      <div className="py-8">
+        <ContentRow title="New Releases" viewAllLink="/browse">
+          {mockFilms.map((film) => (
+            <FilmCard key={film.id} {...film} />
+          ))}
+        </ContentRow>
+
+        <ContentRow title="Short Films" viewAllLink="/shorts">
+          {mockShorts.map((short) => (
+            <ShortCard key={short.id} {...short} />
+          ))}
+        </ContentRow>
+
+        <ContentRow title="Featured Dramas" viewAllLink="/browse?genre=drama">
+          {mockFilms.filter(f => f.genre.includes('Drama')).map((film) => (
+            <FilmCard key={film.id} {...film} />
+          ))}
+        </ContentRow>
+
+        <ContentRow title="Documentaries" viewAllLink="/browse?genre=documentary">
+          {mockFilms.filter(f => f.genre.includes('Documentary')).map((film) => (
+            <FilmCard key={film.id} {...film} />
+          ))}
+        </ContentRow>
+      </div>
+
+      {/* ─── CREATOR ONBOARDING STEPS ─── */}
+      <section className="py-20 bg-noir-light">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-14"
+          >
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary mb-3">For Creators</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+              From Upload to <span className="text-gold-gradient">Audience</span>
+            </h2>
+          </motion.div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            {steps.map((step, i) => (
+              <motion.div
+                key={step.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex flex-col items-center text-center"
+              >
+                <div className="w-14 h-14 rounded-full gold-border flex items-center justify-center mb-3 gold-glow">
+                  <step.icon size={20} className="text-primary" />
+                </div>
+                <div className="w-6 h-px bg-primary/30 mb-3 hidden md:block" />
+                <h3 className="font-display text-sm font-semibold text-foreground">{step.label}</h3>
+                <p className="font-mono text-[9px] text-muted-foreground mt-1 uppercase tracking-wider">{step.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <GoldButton onClick={() => navigate('/submit')}>
+              Start Submitting <ArrowRight size={14} className="ml-2" />
+            </GoldButton>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── VALUE PROPS ─── */}
+      <section className="py-20">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {valueProps.map((prop, i) => (
+              <motion.div
+                key={prop.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-card gold-border rounded-sm p-6"
+              >
+                <h3 className="font-display text-lg font-bold text-primary mb-2">{prop.title}</h3>
+                <p className="font-body text-sm text-muted-foreground leading-relaxed">{prop.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CREATOR SPOTLIGHT ─── */}
+      <ContentRow title="Creator Spotlight">
+        {mockCreators.map((creator) => (
+          <CreatorCard key={creator.id} {...creator} />
+        ))}
+      </ContentRow>
+
+      {/* ─── FAQ ─── */}
+      <section className="py-20 bg-noir-light">
+        <div className="container mx-auto px-6 max-w-2xl">
+          <div className="text-center mb-12">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary mb-3">FAQ</p>
+            <h2 className="font-display text-3xl font-bold text-foreground">Questions & Answers</h2>
+          </div>
+          <Accordion type="single" collapsible className="space-y-3">
+            {faqItems.map((item, i) => (
+              <AccordionItem key={i} value={`faq-${i}`} className="bg-card gold-border rounded-sm px-5">
+                <AccordionTrigger className="font-display text-sm font-semibold text-foreground hover:text-primary">
+                  {item.question}
+                </AccordionTrigger>
+                <AccordionContent className="font-body text-sm text-muted-foreground leading-relaxed">
+                  {item.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* ─── BOTTOM CTA ─── */}
+      <section className="py-24 relative film-grain">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
+        <div className="relative z-10 container mx-auto px-6 text-center">
+          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
+            Your Story Deserves a <span className="text-gold-gradient">Stage</span>
+          </h2>
+          <p className="font-body text-muted-foreground mb-8 max-w-lg mx-auto">
+            Join thousands of independent creators streaming their work to a global audience.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <GoldButton size="lg" onClick={() => navigate('/submit')}>Submit Your Film</GoldButton>
+            <GoldButton size="lg" variant="outline" onClick={() => navigate('/browse')}>Browse Library</GoldButton>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };
