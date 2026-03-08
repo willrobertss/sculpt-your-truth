@@ -14,16 +14,275 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      films: {
+        Row: {
+          banner_url: string | null
+          content_type: Database["public"]["Enums"]["content_type"]
+          created_at: string
+          creator_id: string
+          credits: Json | null
+          duration_minutes: number | null
+          featured: boolean | null
+          genre: string[] | null
+          id: string
+          poster_url: string | null
+          release_year: number | null
+          slug: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          synopsis: string | null
+          tagline: string | null
+          tags: string[] | null
+          title: string
+          trailer_url: string | null
+          updated_at: string
+          video_url: string | null
+          view_count: number | null
+        }
+        Insert: {
+          banner_url?: string | null
+          content_type?: Database["public"]["Enums"]["content_type"]
+          created_at?: string
+          creator_id: string
+          credits?: Json | null
+          duration_minutes?: number | null
+          featured?: boolean | null
+          genre?: string[] | null
+          id?: string
+          poster_url?: string | null
+          release_year?: number | null
+          slug?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          synopsis?: string | null
+          tagline?: string | null
+          tags?: string[] | null
+          title: string
+          trailer_url?: string | null
+          updated_at?: string
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          banner_url?: string | null
+          content_type?: Database["public"]["Enums"]["content_type"]
+          created_at?: string
+          creator_id?: string
+          credits?: Json | null
+          duration_minutes?: number | null
+          featured?: boolean | null
+          genre?: string[] | null
+          id?: string
+          poster_url?: string | null
+          release_year?: number | null
+          slug?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          synopsis?: string | null
+          tagline?: string | null
+          tags?: string[] | null
+          title?: string
+          trailer_url?: string | null
+          updated_at?: string
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          genre_focus: string[] | null
+          id: string
+          location: string | null
+          slug: string | null
+          social_links: Json | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          genre_focus?: string[] | null
+          id?: string
+          location?: string | null
+          slug?: string | null
+          social_links?: Json | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          genre_focus?: string[] | null
+          id?: string
+          location?: string | null
+          slug?: string | null
+          social_links?: Json | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      shorts: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string | null
+          duration_seconds: number | null
+          featured: boolean | null
+          genre: string[] | null
+          id: string
+          status: Database["public"]["Enums"]["submission_status"]
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string | null
+          view_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          duration_seconds?: number | null
+          featured?: boolean | null
+          genre?: string[] | null
+          id?: string
+          status?: Database["public"]["Enums"]["submission_status"]
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          duration_seconds?: number | null
+          featured?: boolean | null
+          genre?: string[] | null
+          id?: string
+          status?: Database["public"]["Enums"]["submission_status"]
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      submissions: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          creator_id: string
+          film_id: string | null
+          id: string
+          reviewed_at: string | null
+          rights_agreed: boolean | null
+          short_id: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          creator_id: string
+          film_id?: string | null
+          id?: string
+          reviewed_at?: string | null
+          rights_agreed?: boolean | null
+          short_id?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          creator_id?: string
+          film_id?: string | null
+          id?: string
+          reviewed_at?: string | null
+          rights_agreed?: boolean | null
+          short_id?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_film_id_fkey"
+            columns: ["film_id"]
+            isOneToOne: false
+            referencedRelation: "films"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_short_id_fkey"
+            columns: ["short_id"]
+            isOneToOne: false
+            referencedRelation: "shorts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "creator" | "viewer"
+      content_type: "feature" | "short" | "documentary" | "series_episode"
+      submission_status:
+        | "draft"
+        | "pending"
+        | "in_review"
+        | "approved"
+        | "rejected"
+        | "live"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +409,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "creator", "viewer"],
+      content_type: ["feature", "short", "documentary", "series_episode"],
+      submission_status: [
+        "draft",
+        "pending",
+        "in_review",
+        "approved",
+        "rejected",
+        "live",
+      ],
+    },
   },
 } as const
