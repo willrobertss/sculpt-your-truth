@@ -60,7 +60,7 @@ const Index = () => {
         <div className="relative z-10 container mx-auto px-6 text-center">
           <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto">
             <motion.div variants={fadeUp} className="flex justify-center mb-6">
-              <img src={logo} alt="OPPRIME.tv" className="h-24 md:h-40" />
+              <img src={logo} alt="OPPRIME.tv" className="w-full max-w-3xl" />
             </motion.div>
             <motion.h1 variants={fadeUp} className="font-display text-2xl md:text-4xl lg:text-5xl font-bold text-foreground leading-[1.1] mb-6 whitespace-nowrap">
               Where Storytellers <span className="text-gold-gradient">Find Their Stage</span>
