@@ -64,7 +64,7 @@ const Index = () => {
       <Navbar />
 
       {/* ─── HERO ─── */}
-      <section className="relative h-[85vh] flex items-center justify-center overflow-hidden film-grain vignette">
+      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden film-grain vignette">
         {/* Film set background image */}
         <div className="absolute inset-0">
           <img src={heroImage} alt="" className="w-full h-full object-cover opacity-50" />
