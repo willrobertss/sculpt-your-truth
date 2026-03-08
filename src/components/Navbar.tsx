@@ -43,9 +43,8 @@ const Navbar = () => {
       }`}
     >
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-0 font-display text-2xl font-bold tracking-wider">
-          <span className="text-foreground">OPPRIME</span>
-          <span className="text-primary">.tv</span>
+        <Link to="/" className="flex items-center">
+          <img src={logo} alt="OPPRIME.tv" className="h-8" />
         </Link>
 
         {/* Desktop nav */}
