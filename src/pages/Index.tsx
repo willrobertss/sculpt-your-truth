@@ -215,7 +215,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
         <div className="relative z-10 container mx-auto px-6 text-center">
           <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
-            Your Story Deserves a <span className="text-gold-gradient">Stage</span>
+            Your Storytelling Deserves a <span className="text-gold-gradient">Stage</span>
           </h2>
           <p className="font-body text-muted-foreground mb-8 max-w-lg mx-auto">
             Join thousands of independent creators streaming their work to a global audience.
