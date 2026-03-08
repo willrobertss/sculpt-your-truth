@@ -61,7 +61,7 @@ const Index = () => {
               The Future of Independent Cinema
             </motion.p>
             <motion.h1 variants={fadeUp} className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-6">
-              Where Bold Stories{' '}
+              Where Bold Story Tellers{' '}
               <span className="text-gold-gradient">Find Their Stage</span>
             </motion.h1>
             <motion.p variants={fadeUp} className="font-body text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-10">
