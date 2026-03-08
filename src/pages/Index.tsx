@@ -12,6 +12,7 @@ import GoldButton from '@/components/GoldButton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { mockFilms, mockShorts, mockCreators, faqItems } from '@/lib/mock-data';
+import heroImage from '@/assets/hero-filmset.jpg';
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -49,13 +50,11 @@ const Index = () => {
 
       {/* ─── HERO ─── */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden film-grain vignette">
-        {/* Poster grid background */}
-        <div className="absolute inset-0 grid grid-cols-4 md:grid-cols-6 gap-1 opacity-15 blur-sm">
-          {[...mockFilms, ...mockFilms].map((film, i) => (
-            <img key={i} src={film.poster_url} alt="" className="w-full h-full object-cover" />
-          ))}
+        {/* Film set background image */}
+        <div className="absolute inset-0">
+          <img src={heroImage} alt="" className="w-full h-full object-cover opacity-30" />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
 
         <div className="relative z-10 container mx-auto px-6 text-center">
           <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto">
@@ -63,7 +62,7 @@ const Index = () => {
               The Future of Independent Cinema
             </motion.p>
             <motion.h1 variants={fadeUp} className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-6">
-              Where Bold Stories{' '}
+              Where Bold Story Tellers{' '}
               <span className="text-gold-gradient">Find Their Stage</span>
             </motion.h1>
             <motion.p variants={fadeUp} className="font-body text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-10">
