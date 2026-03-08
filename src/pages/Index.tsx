@@ -12,6 +12,7 @@ import GoldButton from '@/components/GoldButton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { mockFilms, mockShorts, mockCreators, faqItems } from '@/lib/mock-data';
+import heroImage from '@/assets/hero-filmset.jpg';
 
 const stagger = {
   hidden: { opacity: 0 },
