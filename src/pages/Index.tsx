@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Film, Tv, Upload, Star, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -9,9 +9,11 @@ import ShortCard from '@/components/ShortCard';
 import CreatorCard from '@/components/CreatorCard';
 import ContentRow from '@/components/ContentRow';
 import GoldButton from '@/components/GoldButton';
+import TestimonialCard from '@/components/TestimonialCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { mockFilms, mockShorts, mockCreators, faqItems } from '@/lib/mock-data';
+import { supabase } from '@/integrations/supabase/client';
 import heroImage from '@/assets/hero-filmset.jpg';
 import logo from '@/assets/logo.png';
 
@@ -26,7 +28,19 @@ const fadeUp = {
 
 const Index = () => {
   const [email, setEmail] = useState('');
+  const [testimonials, setTestimonials] = useState<Array<{ id: string; name: string; role: string; quote: string; avatar_url: string | null; rating: number }>>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase
+      .from('testimonials')
+      .select('id, name, role, quote, avatar_url, rating')
+      .eq('is_active', true)
+      .order('display_order')
+      .then(({ data }) => {
+        if (data && data.length > 0) setTestimonials(data);
+      });
+  }, []);
 
   const marqueeText = '★ NEW RELEASES EVERY WEEK ★ INDEPENDENT CINEMA ★ CREATOR-FIRST PLATFORM ★ SHORTS & FEATURES ★ GLOBAL STORYTELLERS ★ ';
 
@@ -83,6 +97,27 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      {testimonials.length > 0 && (
+        <section className="py-10 bg-noir-light">
+          <div className="container mx-auto px-6">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary mb-5 text-center">What Creators Are Saying</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {testimonials.map((t) => (
+                <TestimonialCard
+                  key={t.id}
+                  name={t.name}
+                  role={t.role}
+                  quote={t.quote}
+                  avatarUrl={t.avatar_url}
+                  rating={t.rating}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ─── GOLD MARQUEE ─── */}
       <div className="bg-primary/10 border-y border-primary/20 py-3 overflow-hidden">
