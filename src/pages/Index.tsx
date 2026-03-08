@@ -28,7 +28,19 @@ const fadeUp = {
 
 const Index = () => {
   const [email, setEmail] = useState('');
+  const [testimonials, setTestimonials] = useState<Array<{ id: string; name: string; role: string; quote: string; avatar_url: string | null; rating: number }>>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase
+      .from('testimonials')
+      .select('id, name, role, quote, avatar_url, rating')
+      .eq('is_active', true)
+      .order('display_order')
+      .then(({ data }) => {
+        if (data && data.length > 0) setTestimonials(data);
+      });
+  }, []);
 
   const marqueeText = '★ NEW RELEASES EVERY WEEK ★ INDEPENDENT CINEMA ★ CREATOR-FIRST PLATFORM ★ SHORTS & FEATURES ★ GLOBAL STORYTELLERS ★ ';
 
