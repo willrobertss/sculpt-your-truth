@@ -52,9 +52,9 @@ const Index = () => {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden film-grain vignette">
         {/* Film set background image */}
         <div className="absolute inset-0">
-          <img src={heroImage} alt="" className="w-full h-full object-cover opacity-30" />
+          <img src={heroImage} alt="" className="w-full h-full object-cover opacity-50" />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/75 to-background" />
 
         <div className="relative z-10 container mx-auto px-6 text-center">
           <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto">
