@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Film, Tv, Upload, Star, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -9,9 +9,11 @@ import ShortCard from '@/components/ShortCard';
 import CreatorCard from '@/components/CreatorCard';
 import ContentRow from '@/components/ContentRow';
 import GoldButton from '@/components/GoldButton';
+import TestimonialCard from '@/components/TestimonialCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { mockFilms, mockShorts, mockCreators, faqItems } from '@/lib/mock-data';
+import { supabase } from '@/integrations/supabase/client';
 import heroImage from '@/assets/hero-filmset.jpg';
 import logo from '@/assets/logo.png';
 
