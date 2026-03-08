@@ -98,6 +98,27 @@ const Index = () => {
         </div>
       </section>
 
+      {/* ─── TESTIMONIALS ─── */}
+      {testimonials.length > 0 && (
+        <section className="py-10 bg-noir-light">
+          <div className="container mx-auto px-6">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary mb-5 text-center">What Creators Are Saying</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {testimonials.map((t) => (
+                <TestimonialCard
+                  key={t.id}
+                  name={t.name}
+                  role={t.role}
+                  quote={t.quote}
+                  avatarUrl={t.avatar_url}
+                  rating={t.rating}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ─── GOLD MARQUEE ─── */}
       <div className="bg-primary/10 border-y border-primary/20 py-3 overflow-hidden">
         <div className="flex animate-marquee whitespace-nowrap">
