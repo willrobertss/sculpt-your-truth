@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import GoldButton from '@/components/GoldButton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getStoredReferral, processReferralAttribution } from '@/lib/referral-utils';
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -15,8 +16,18 @@ const Login = () => {
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [hasReferral, setHasReferral] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check for referral on mount
+  useEffect(() => {
+    const referral = getStoredReferral();
+    if (referral) {
+      setHasReferral(true);
+      setIsSignUp(true); // Default to signup if coming from referral
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +35,7 @@ const Login = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -33,6 +44,12 @@ const Login = () => {
           },
         });
         if (error) throw error;
+        
+        // Process referral attribution if user was created
+        if (data.user) {
+          await processReferralAttribution(data.user.id);
+        }
+        
         toast({ title: 'Account created!', description: 'Check your email to confirm your account.' });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

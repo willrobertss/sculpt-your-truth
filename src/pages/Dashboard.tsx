@@ -8,6 +8,7 @@ import DashboardFilms from '@/components/dashboard/DashboardFilms';
 import DashboardShorts from '@/components/dashboard/DashboardShorts';
 import DashboardEmail from '@/components/dashboard/DashboardEmail';
 import DashboardSettings from '@/components/dashboard/DashboardSettings';
+import DashboardEarnings from '@/components/dashboard/DashboardEarnings';
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -70,6 +71,7 @@ const Dashboard = () => {
           {activeTab === 'overview' && <DashboardOverview profile={profile} user={user} stats={stats} myFilms={myFilms} myShorts={myShorts} />}
           {activeTab === 'films' && <DashboardFilms myFilms={myFilms} />}
           {activeTab === 'shorts' && <DashboardShorts myShorts={myShorts} />}
+          {activeTab === 'earnings' && <DashboardEarnings profile={profile} user={user} />}
           {activeTab === 'email' && <DashboardEmail myFilms={myFilms} myShorts={myShorts} profile={profile} user={user} />}
           {activeTab === 'settings' && <DashboardSettings profile={profile} user={user} />}
         </div>
