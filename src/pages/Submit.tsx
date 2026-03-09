@@ -27,7 +27,7 @@ const Submit = () => {
   const [title, setTitle] = useState('');
   const [synopsis, setSynopsis] = useState('');
   const [genre, setGenre] = useState('');
-  const [contentType, setContentType] = useState<'feature' | 'short'>('feature');
+  const [contentType, setContentType] = useState<'feature' | 'short' | 'vertical'>('feature');
   const [rightsAgreed, setRightsAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
