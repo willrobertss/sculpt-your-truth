@@ -85,8 +85,9 @@ const BulkImport = () => {
     for (let i = 0; i < validRows.length; i += CHUNK) {
       const chunk = validRows.slice(i, i + CHUNK).map((row) => ({
         ...row,
+        title: row.title as string,
         creator_id: session.user.id,
-        status: defaultStatus,
+        status: defaultStatus as any,
       }));
       const { error } = await supabase.from('films').insert(chunk);
       if (error) {
