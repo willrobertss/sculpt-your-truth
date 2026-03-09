@@ -53,10 +53,19 @@ const Submit = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const table = contentType === 'short' ? 'shorts' : 'films';
-      const insertData = contentType === 'short'
-        ? { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const }
-        : { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'pending' as const };
+      let table: 'shorts' | 'films' | 'verticals';
+      let insertData: any;
+
+      if (contentType === 'vertical') {
+        table = 'verticals';
+        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const };
+      } else if (contentType === 'short') {
+        table = 'shorts';
+        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const };
+      } else {
+        table = 'films';
+        insertData = { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'pending' as const };
+      }
 
       const { data, error } = await supabase.from(table).insert(insertData).select().single();
       if (error) throw error;
