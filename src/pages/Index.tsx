@@ -32,6 +32,7 @@ const Index = () => {
   const [films, setFilms] = useState<any[]>([]);
   const [shorts, setShorts] = useState<any[]>([]);
   const [verticals, setVerticals] = useState<any[]>([]);
+  const [creators, setCreators] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
