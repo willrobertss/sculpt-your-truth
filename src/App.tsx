@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Submit from "./pages/Submit";
 import Dashboard from "./pages/Dashboard";
 import CreatorProfile from "./pages/CreatorProfile";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/submit" element={<Submit />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/creators/:slug" element={<CreatorProfile />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

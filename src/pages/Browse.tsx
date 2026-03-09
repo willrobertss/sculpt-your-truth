@@ -1,24 +1,39 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Grid3X3, List } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FilmCard from '@/components/FilmCard';
 import { Input } from '@/components/ui/input';
-import { mockFilms, genres } from '@/lib/mock-data';
+import { supabase } from '@/integrations/supabase/client';
+import { genres } from '@/lib/mock-data';
 
 const Browse = () => {
   const [search, setSearch] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [films, setFilms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from('films')
+      .select('id, title, tagline, genre, duration_minutes, release_year, poster_url, banner_url, status, featured, view_count, slug')
+      .eq('status', 'live')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setFilms(data || []);
+        setLoading(false);
+      });
+  }, []);
 
   const filtered = useMemo(() => {
-    return mockFilms.filter((f) => {
+    return films.filter((f) => {
       const matchSearch = !search || f.title.toLowerCase().includes(search.toLowerCase());
-      const matchGenre = !selectedGenre || f.genre.includes(selectedGenre);
+      const matchGenre = !selectedGenre || (f.genre || []).includes(selectedGenre);
       return matchSearch && matchGenre;
     });
-  }, [search, selectedGenre]);
+  }, [search, selectedGenre, films]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,7 +43,7 @@ const Browse = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">Browse Library</h1>
             <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">
-              {filtered.length} titles available
+              {loading ? '...' : `${filtered.length} titles available`}
             </p>
           </motion.div>
 
@@ -96,14 +111,14 @@ const Browse = () => {
                 transition={{ delay: i * 0.05 }}
               >
                 {viewMode === 'grid' ? (
-                  <FilmCard {...film} />
+                  <FilmCard id={film.id} title={film.title} genre={film.genre || []} poster_url={film.poster_url || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=600&fit=crop'} release_year={film.release_year} duration_minutes={film.duration_minutes} />
                 ) : (
                   <div className="flex gap-4 items-center bg-card gold-border rounded-sm p-3 hover:bg-surface-hover transition-colors">
-                    <img src={film.poster_url} alt={film.title} className="w-12 h-18 object-cover rounded-sm" />
+                    <img src={film.poster_url || ''} alt={film.title} className="w-12 h-18 object-cover rounded-sm" />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-display text-sm font-semibold text-foreground truncate">{film.title}</h3>
                       <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-                        {film.genre.join(' · ')} · {film.release_year}
+                        {(film.genre || []).join(' · ')} · {film.release_year}
                       </p>
                     </div>
                     <span className="font-mono text-[10px] text-muted-foreground">{film.duration_minutes}m</span>
@@ -113,7 +128,7 @@ const Browse = () => {
             ))}
           </motion.div>
 
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && (
             <div className="text-center py-20">
               <p className="font-display text-lg text-muted-foreground">No films found</p>
             </div>

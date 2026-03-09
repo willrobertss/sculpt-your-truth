@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Film, Tv, Clock, Eye, Settings, LogOut, Upload, LayoutDashboard } from 'lucide-react';
+import { Film, Tv, Clock, Eye, Settings, LogOut, Upload, LayoutDashboard, Shield } from 'lucide-react';
 import GoldButton from '@/components/GoldButton';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,6 +9,10 @@ const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [myFilms, setMyFilms] = useState<any[]>([]);
+  const [myShorts, setMyShorts] = useState<any[]>([]);
+  const [stats, setStats] = useState({ views: 0, active: 0, pending: 0 });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,9 +29,26 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from('profiles').select('*').eq('user_id', user.id).single().then(({ data }) => {
-      if (data) setProfile(data);
-    });
+    const load = async () => {
+      const [profileRes, filmsRes, shortsRes, adminRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('user_id', user.id).single(),
+        supabase.from('films').select('*').eq('creator_id', user.id),
+        supabase.from('shorts').select('*').eq('creator_id', user.id),
+        supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle(),
+      ]);
+      if (profileRes.data) setProfile(profileRes.data);
+      const films = filmsRes.data || [];
+      const shorts = shortsRes.data || [];
+      setMyFilms(films);
+      setMyShorts(shorts);
+      setIsAdmin(!!adminRes.data);
+
+      const totalViews = [...films, ...shorts].reduce((s, f) => s + (f.view_count || 0), 0);
+      const active = [...films, ...shorts].filter(f => f.status === 'live').length;
+      const pending = [...films, ...shorts].filter(f => f.status === 'pending' || f.status === 'in_review').length;
+      setStats({ views: totalViews, active, pending });
+    };
+    load();
   }, [user]);
 
   const handleLogout = async () => {
@@ -42,17 +63,10 @@ const Dashboard = () => {
     { id: 'settings', label: 'Profile', icon: Settings },
   ];
 
-  const stats = [
-    { label: 'Total Views', value: '0', icon: Eye },
-    { label: 'Active Titles', value: '0', icon: Film },
-    { label: 'Pending', value: '0', icon: Clock },
-  ];
-
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
       <aside className="hidden md:flex w-64 bg-noir-light border-r border-border flex-col">
         <div className="p-6 border-b border-border">
           <Link to="/" className="font-display text-xl font-bold tracking-wider">
@@ -66,53 +80,48 @@ const Dashboard = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-sm font-mono text-xs uppercase tracking-widest transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-surface'
+                activeTab === tab.id ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-surface'
               }`}
             >
               <tab.icon size={14} />
               {tab.label}
             </button>
           ))}
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-sm font-mono text-xs uppercase tracking-widest text-primary hover:bg-primary/10 transition-colors"
+            >
+              <Shield size={14} />
+              Admin Panel
+            </button>
+          )}
         </nav>
         <div className="p-4 border-t border-border">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-sm font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <LogOut size={14} />
-            Sign Out
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-sm font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-destructive transition-colors">
+            <LogOut size={14} /> Sign Out
           </button>
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 overflow-auto">
-        {/* Mobile header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-noir-light">
           <Link to="/" className="font-display text-lg font-bold">
-            <span className="text-foreground">OPPRIME</span>
-            <span className="text-primary">.tv</span>
+            <span className="text-foreground">OPPRIME</span><span className="text-primary">.tv</span>
           </Link>
-          <button onClick={handleLogout} className="text-muted-foreground">
-            <LogOut size={18} />
-          </button>
+          <button onClick={handleLogout} className="text-muted-foreground"><LogOut size={18} /></button>
         </div>
-
-        {/* Mobile tabs */}
         <div className="md:hidden flex overflow-x-auto hide-scrollbar border-b border-border bg-noir-light">
           {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-shrink-0 px-4 py-3 font-mono text-[10px] uppercase tracking-widest border-b-2 transition-colors ${
-                activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'
-              }`}
-            >
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-shrink-0 px-4 py-3 font-mono text-[10px] uppercase tracking-widest border-b-2 transition-colors ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}>
               {tab.label}
             </button>
           ))}
+          {isAdmin && (
+            <button onClick={() => navigate('/admin')} className="flex-shrink-0 px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-primary border-b-2 border-transparent">
+              Admin
+            </button>
+          )}
         </div>
 
         <div className="p-6 md:p-10">
@@ -122,9 +131,12 @@ const Dashboard = () => {
                 Welcome, {profile?.display_name || user.email?.split('@')[0]}
               </h1>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-8">Creator Dashboard</p>
-
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-                {stats.map((stat) => (
+                {[
+                  { label: 'Total Views', value: stats.views.toLocaleString(), icon: Eye },
+                  { label: 'Active Titles', value: stats.active.toString(), icon: Film },
+                  { label: 'Pending', value: stats.pending.toString(), icon: Clock },
+                ].map((stat) => (
                   <div key={stat.label} className="bg-card gold-border rounded-sm p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <stat.icon size={14} className="text-primary" />
@@ -134,7 +146,6 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
-
               <div className="bg-card gold-border rounded-sm p-8 text-center">
                 <Upload size={32} className="text-primary mx-auto mb-4" />
                 <h3 className="font-display text-lg font-bold text-foreground mb-2">Ready to share your work?</h3>
@@ -147,22 +158,50 @@ const Dashboard = () => {
           {activeTab === 'films' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <h2 className="font-display text-2xl font-bold text-foreground mb-6">My Films</h2>
-              <div className="bg-card gold-border rounded-sm p-8 text-center">
-                <Film size={32} className="text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground font-body">No films yet. Submit your first feature or documentary.</p>
-                <GoldButton className="mt-4" onClick={() => navigate('/submit')}>Upload Film</GoldButton>
-              </div>
+              {myFilms.length > 0 ? (
+                <div className="space-y-3">
+                  {myFilms.map((f) => (
+                    <div key={f.id} className="flex gap-4 items-center bg-card gold-border rounded-sm p-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-display text-sm font-semibold text-foreground truncate">{f.title}</h3>
+                        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">{(f.genre || []).join(' · ')} · {f.status}</p>
+                      </div>
+                      <span className="font-mono text-[10px] text-muted-foreground">{(f.view_count || 0).toLocaleString()} views</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-card gold-border rounded-sm p-8 text-center">
+                  <Film size={32} className="text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground font-body">No films yet. Submit your first feature or documentary.</p>
+                  <GoldButton className="mt-4" onClick={() => navigate('/submit')}>Upload Film</GoldButton>
+                </div>
+              )}
             </motion.div>
           )}
 
           {activeTab === 'shorts' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <h2 className="font-display text-2xl font-bold text-foreground mb-6">My Shorts</h2>
-              <div className="bg-card gold-border rounded-sm p-8 text-center">
-                <Tv size={32} className="text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground font-body">No shorts yet. Upload a vertical short film.</p>
-                <GoldButton className="mt-4" onClick={() => navigate('/submit')}>Upload Short</GoldButton>
-              </div>
+              {myShorts.length > 0 ? (
+                <div className="space-y-3">
+                  {myShorts.map((s) => (
+                    <div key={s.id} className="flex gap-4 items-center bg-card gold-border rounded-sm p-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-display text-sm font-semibold text-foreground truncate">{s.title}</h3>
+                        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">{s.status}</p>
+                      </div>
+                      <span className="font-mono text-[10px] text-muted-foreground">{(s.view_count || 0).toLocaleString()} views</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-card gold-border rounded-sm p-8 text-center">
+                  <Tv size={32} className="text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground font-body">No shorts yet. Upload a vertical short film.</p>
+                  <GoldButton className="mt-4" onClick={() => navigate('/submit')}>Upload Short</GoldButton>
+                </div>
+              )}
             </motion.div>
           )}
 
