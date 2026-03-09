@@ -320,6 +320,60 @@ export type Database = {
         }
         Relationships: []
       }
+      verticals: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string | null
+          duration_seconds: number | null
+          featured: boolean | null
+          genre: string[] | null
+          id: string
+          like_count: number | null
+          status: Database["public"]["Enums"]["submission_status"]
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string | null
+          view_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          duration_seconds?: number | null
+          featured?: boolean | null
+          genre?: string[] | null
+          id?: string
+          like_count?: number | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          duration_seconds?: number | null
+          featured?: boolean | null
+          genre?: string[] | null
+          id?: string
+          like_count?: number | null
+          status?: Database["public"]["Enums"]["submission_status"]
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
