@@ -131,6 +131,30 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          referred_user_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          referred_user_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          referred_user_id?: string
+          referrer_id?: string
+        }
+        Relationships: []
+      }
       shorts: {
         Row: {
           created_at: string
