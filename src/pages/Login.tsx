@@ -79,6 +79,11 @@ const Login = () => {
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-3">
             {isSignUp ? 'Create Your Creator Account' : 'Welcome Back'}
           </p>
+          {hasReferral && isSignUp && (
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mt-2">
+              ✦ You were referred by a creator ✦
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="bg-card gold-border rounded-sm p-6 space-y-5">
