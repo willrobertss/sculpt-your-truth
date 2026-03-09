@@ -31,6 +31,7 @@ const App = () => (
           <Route path="/submit" element={<Submit />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/creators/:slug" element={<CreatorProfile />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
