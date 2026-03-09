@@ -112,6 +112,7 @@ const Admin = () => {
           {activeTab === 'shorts' && <ShortsTable />}
           {activeTab === 'testimonials' && <TestimonialsManager />}
           {activeTab === 'users' && <UsersTable />}
+          {activeTab === 'import' && <BulkImport />}
         </div>
       </main>
     </div>
