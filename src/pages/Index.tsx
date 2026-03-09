@@ -147,6 +147,14 @@ const Index = () => {
           </ContentRow>
         )}
 
+        {verticals.length > 0 && (
+          <ContentRow title="Verticals" viewAllLink="/verticals">
+            {verticals.map((v) => (
+              <ShortCard key={v.id} id={v.id} title={v.title} thumbnail_url={v.thumbnail_url || ''} duration_seconds={v.duration_seconds} view_count={v.view_count} />
+            ))}
+          </ContentRow>
+        )}
+
         {dramaFilms.length > 0 && (
           <ContentRow title="Featured Dramas" viewAllLink="/browse?genre=drama">
             {dramaFilms.map((film) => (
