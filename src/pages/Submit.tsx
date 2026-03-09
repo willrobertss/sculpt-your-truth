@@ -71,9 +71,13 @@ const Submit = () => {
       if (error) throw error;
 
       // Create submission record
-      const submissionData = contentType === 'short'
-        ? { creator_id: user.id, short_id: data.id, status: 'pending' as const, rights_agreed: true }
-        : { creator_id: user.id, film_id: data.id, status: 'pending' as const, rights_agreed: true };
+      const submissionData: any = { creator_id: user.id, status: 'pending' as const, rights_agreed: true };
+      if (contentType === 'short') submissionData.short_id = data.id;
+      else if (contentType === 'feature') submissionData.film_id = data.id;
+      // Verticals don't need a submission record for now (no film_id/short_id FK)
+      if (contentType !== 'vertical') {
+        await supabase.from('submissions').insert(submissionData);
+      }
 
       await supabase.from('submissions').insert(submissionData);
 
