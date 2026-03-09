@@ -31,7 +31,7 @@ const Index = () => {
   const [testimonials, setTestimonials] = useState<Array<{ id: string; name: string; role: string; quote: string; avatar_url: string | null; rating: number }>>([]);
   const [films, setFilms] = useState<any[]>([]);
   const [shorts, setShorts] = useState<any[]>([]);
-  const [creators, setCreators] = useState<any[]>([]);
+  const [verticals, setVerticals] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
