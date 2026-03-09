@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Submit from "./pages/Submit";
 import Dashboard from "./pages/Dashboard";
 import CreatorProfile from "./pages/CreatorProfile";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
