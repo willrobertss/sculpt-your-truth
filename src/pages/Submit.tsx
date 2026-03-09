@@ -156,10 +156,10 @@ const Submit = () => {
               <div className="space-y-5">
                 <h2 className="font-display text-xl font-bold text-foreground">Upload</h2>
                 <p className="font-body text-sm text-muted-foreground">Select your content type. Video upload will be available once your submission is approved.</p>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={() => setContentType('feature')}
-                    className={`flex-1 p-4 rounded-sm text-center transition-colors ${
+                    className={`p-4 rounded-sm text-center transition-colors ${
                       contentType === 'feature' ? 'bg-primary/10 gold-border text-primary' : 'bg-surface text-muted-foreground'
                     }`}
                   >
@@ -167,11 +167,20 @@ const Submit = () => {
                   </button>
                   <button
                     onClick={() => setContentType('short')}
-                    className={`flex-1 p-4 rounded-sm text-center transition-colors ${
+                    className={`p-4 rounded-sm text-center transition-colors ${
                       contentType === 'short' ? 'bg-primary/10 gold-border text-primary' : 'bg-surface text-muted-foreground'
                     }`}
                   >
                     <p className="font-mono text-xs uppercase tracking-widest">Short Film</p>
+                  </button>
+                  <button
+                    onClick={() => setContentType('vertical')}
+                    className={`p-4 rounded-sm text-center transition-colors ${
+                      contentType === 'vertical' ? 'bg-primary/10 gold-border text-primary' : 'bg-surface text-muted-foreground'
+                    }`}
+                  >
+                    <p className="font-mono text-xs uppercase tracking-widest">Vertical</p>
+                    <p className="font-mono text-[9px] text-muted-foreground mt-1">9:16 Portrait</p>
                   </button>
                 </div>
                 <GoldButton className="w-full" onClick={() => setCurrentStep(2)}>Continue</GoldButton>
