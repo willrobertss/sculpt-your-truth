@@ -18,6 +18,7 @@ const tabs = [
   { id: 'shorts', label: 'Shorts', icon: Tv },
   { id: 'testimonials', label: 'Testimonials', icon: MessageSquare },
   { id: 'users', label: 'Users', icon: Users },
+  { id: 'import', label: 'Bulk Import', icon: Upload },
 ];
 
 const Admin = () => {
