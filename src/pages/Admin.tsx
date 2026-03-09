@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Film, Tv, MessageSquare, Users, LogOut, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, FileText, Film, Tv, MessageSquare, Users, LogOut, ArrowLeft, Upload } from 'lucide-react';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import AdminOverview from '@/components/admin/AdminOverview';
@@ -9,6 +9,7 @@ import FilmsTable from '@/components/admin/FilmsTable';
 import ShortsTable from '@/components/admin/ShortsTable';
 import TestimonialsManager from '@/components/admin/TestimonialsManager';
 import UsersTable from '@/components/admin/UsersTable';
+import BulkImport from '@/components/admin/BulkImport';
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const tabs = [
   { id: 'shorts', label: 'Shorts', icon: Tv },
   { id: 'testimonials', label: 'Testimonials', icon: MessageSquare },
   { id: 'users', label: 'Users', icon: Users },
+  { id: 'import', label: 'Bulk Import', icon: Upload },
 ];
 
 const Admin = () => {
@@ -110,6 +112,7 @@ const Admin = () => {
           {activeTab === 'shorts' && <ShortsTable />}
           {activeTab === 'testimonials' && <TestimonialsManager />}
           {activeTab === 'users' && <UsersTable />}
+          {activeTab === 'import' && <BulkImport />}
         </div>
       </main>
     </div>
