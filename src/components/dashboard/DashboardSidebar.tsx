@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Film, Tv, Settings, LogOut, Upload, LayoutDashboard, Shield, Mail, DollarSign } from 'lucide-react';
+import { Film, Tv, Settings, LogOut, Upload, LayoutDashboard, Shield, Mail, DollarSign, Smartphone } from 'lucide-react';
 
 interface DashboardSidebarProps {
   activeTab: string;
@@ -12,6 +12,7 @@ const tabs = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'films', label: 'My Films', icon: Film },
   { id: 'shorts', label: 'My Shorts', icon: Tv },
+  { id: 'verticals', label: 'My Verticals', icon: Smartphone },
   { id: 'earnings', label: 'Earnings', icon: DollarSign },
   { id: 'email', label: 'Share & Invite', icon: Mail },
   { id: 'settings', label: 'Profile', icon: Settings },

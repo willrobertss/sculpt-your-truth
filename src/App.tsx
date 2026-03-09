@@ -34,6 +34,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/creators/:slug" element={<CreatorProfile />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/verticals" element={<Verticals />} />
           <Route path="/ref/:slug" element={<ReferralLanding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

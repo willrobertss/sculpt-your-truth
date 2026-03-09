@@ -31,6 +31,7 @@ const Navbar = () => {
   const navLinks = [
     { label: 'Browse', href: '/browse' },
     { label: 'Shorts', href: '/shorts' },
+    { label: 'Verticals', href: '/verticals' },
     { label: 'Submit', href: '/submit' },
   ];
 
