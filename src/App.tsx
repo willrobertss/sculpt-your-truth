@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import CreatorProfile from "./pages/CreatorProfile";
 import Admin from "./pages/Admin";
 import ReferralLanding from "./pages/ReferralLanding";
+import Verticals from "./pages/Verticals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
