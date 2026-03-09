@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import CreatorProfile from "./pages/CreatorProfile";
 import Admin from "./pages/Admin";
 import ReferralLanding from "./pages/ReferralLanding";
+import Verticals from "./pages/Verticals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/creators/:slug" element={<CreatorProfile />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/verticals" element={<Verticals />} />
           <Route path="/ref/:slug" element={<ReferralLanding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

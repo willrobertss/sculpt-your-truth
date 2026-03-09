@@ -27,7 +27,7 @@ const Submit = () => {
   const [title, setTitle] = useState('');
   const [synopsis, setSynopsis] = useState('');
   const [genre, setGenre] = useState('');
-  const [contentType, setContentType] = useState<'feature' | 'short'>('feature');
+  const [contentType, setContentType] = useState<'feature' | 'short' | 'vertical'>('feature');
   const [rightsAgreed, setRightsAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
@@ -53,18 +53,31 @@ const Submit = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const table = contentType === 'short' ? 'shorts' : 'films';
-      const insertData = contentType === 'short'
-        ? { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const }
-        : { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'pending' as const };
+      let table: 'shorts' | 'films' | 'verticals';
+      let insertData: any;
+
+      if (contentType === 'vertical') {
+        table = 'verticals';
+        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const };
+      } else if (contentType === 'short') {
+        table = 'shorts';
+        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const };
+      } else {
+        table = 'films';
+        insertData = { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'pending' as const };
+      }
 
       const { data, error } = await supabase.from(table).insert(insertData).select().single();
       if (error) throw error;
 
       // Create submission record
-      const submissionData = contentType === 'short'
-        ? { creator_id: user.id, short_id: data.id, status: 'pending' as const, rights_agreed: true }
-        : { creator_id: user.id, film_id: data.id, status: 'pending' as const, rights_agreed: true };
+      const submissionData: any = { creator_id: user.id, status: 'pending' as const, rights_agreed: true };
+      if (contentType === 'short') submissionData.short_id = data.id;
+      else if (contentType === 'feature') submissionData.film_id = data.id;
+      // Verticals don't need a submission record for now (no film_id/short_id FK)
+      if (contentType !== 'vertical') {
+        await supabase.from('submissions').insert(submissionData);
+      }
 
       await supabase.from('submissions').insert(submissionData);
 
@@ -143,10 +156,10 @@ const Submit = () => {
               <div className="space-y-5">
                 <h2 className="font-display text-xl font-bold text-foreground">Upload</h2>
                 <p className="font-body text-sm text-muted-foreground">Select your content type. Video upload will be available once your submission is approved.</p>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={() => setContentType('feature')}
-                    className={`flex-1 p-4 rounded-sm text-center transition-colors ${
+                    className={`p-4 rounded-sm text-center transition-colors ${
                       contentType === 'feature' ? 'bg-primary/10 gold-border text-primary' : 'bg-surface text-muted-foreground'
                     }`}
                   >
@@ -154,11 +167,20 @@ const Submit = () => {
                   </button>
                   <button
                     onClick={() => setContentType('short')}
-                    className={`flex-1 p-4 rounded-sm text-center transition-colors ${
+                    className={`p-4 rounded-sm text-center transition-colors ${
                       contentType === 'short' ? 'bg-primary/10 gold-border text-primary' : 'bg-surface text-muted-foreground'
                     }`}
                   >
                     <p className="font-mono text-xs uppercase tracking-widest">Short Film</p>
+                  </button>
+                  <button
+                    onClick={() => setContentType('vertical')}
+                    className={`p-4 rounded-sm text-center transition-colors ${
+                      contentType === 'vertical' ? 'bg-primary/10 gold-border text-primary' : 'bg-surface text-muted-foreground'
+                    }`}
+                  >
+                    <p className="font-mono text-xs uppercase tracking-widest">Vertical</p>
+                    <p className="font-mono text-[9px] text-muted-foreground mt-1">9:16 Portrait</p>
                   </button>
                 </div>
                 <GoldButton className="w-full" onClick={() => setCurrentStep(2)}>Continue</GoldButton>

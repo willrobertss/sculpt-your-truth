@@ -31,6 +31,7 @@ const Index = () => {
   const [testimonials, setTestimonials] = useState<Array<{ id: string; name: string; role: string; quote: string; avatar_url: string | null; rating: number }>>([]);
   const [films, setFilms] = useState<any[]>([]);
   const [shorts, setShorts] = useState<any[]>([]);
+  const [verticals, setVerticals] = useState<any[]>([]);
   const [creators, setCreators] = useState<any[]>([]);
   const navigate = useNavigate();
 
@@ -41,11 +42,13 @@ const Index = () => {
       supabase.from('films').select('id, title, tagline, genre, duration_minutes, release_year, poster_url, featured, view_count').eq('status', 'live').order('created_at', { ascending: false }).limit(12),
       supabase.from('shorts').select('id, title, description, thumbnail_url, duration_seconds, genre, view_count').eq('status', 'live').order('created_at', { ascending: false }).limit(8),
       supabase.from('profiles').select('id, display_name, slug, avatar_url, bio, genre_focus, user_id').limit(8),
-    ]).then(([t, f, s, c]) => {
+      supabase.from('verticals').select('id, title, description, thumbnail_url, duration_seconds, genre, view_count').eq('status', 'live').order('created_at', { ascending: false }).limit(8),
+    ]).then(([t, f, s, c, v]) => {
       if (t.data) setTestimonials(t.data);
       if (f.data) setFilms(f.data);
       if (s.data) setShorts(s.data);
       if (c.data) setCreators(c.data.map(p => ({ ...p, film_count: 0 })));
+      if (v.data) setVerticals(v.data);
     });
   }, []);
 
@@ -141,6 +144,14 @@ const Index = () => {
           <ContentRow title="Short Films" viewAllLink="/shorts">
             {shorts.map((short) => (
               <ShortCard key={short.id} {...short} />
+            ))}
+          </ContentRow>
+        )}
+
+        {verticals.length > 0 && (
+          <ContentRow title="Verticals" viewAllLink="/verticals">
+            {verticals.map((v) => (
+              <ShortCard key={v.id} id={v.id} title={v.title} thumbnail_url={v.thumbnail_url || ''} duration_seconds={v.duration_seconds} view_count={v.view_count} />
             ))}
           </ContentRow>
         )}
