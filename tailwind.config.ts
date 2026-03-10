@@ -17,6 +17,8 @@ export default {
         display: ['"Playfair Display"', 'serif'],
         body: ['Lora', 'serif'],
         mono: ['"Courier Prime"', 'monospace'],
+        heading: ['Oswald', 'sans-serif'],
+        sans: ['Raleway', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
