@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      credits: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          role: string
+          serie_id: string | null
+          video_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          role: string
+          serie_id?: string | null
+          video_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+          serie_id?: string | null
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credits_serie_id_fkey"
+            columns: ["serie_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credits_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       films: {
         Row: {
           banner_url: string | null
@@ -86,6 +128,27 @@ export type Database = {
         }
         Relationships: []
       }
+      genres: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          priority: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          priority?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          priority?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -155,6 +218,24 @@ export type Database = {
         }
         Relationships: []
       }
+      series: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       shorts: {
         Row: {
           created_at: string
@@ -205,6 +286,38 @@ export type Database = {
           view_count?: number | null
         }
         Relationships: []
+      }
+      sub_genres: {
+        Row: {
+          created_at: string
+          genre_id: string
+          id: string
+          name: string
+          priority: number
+        }
+        Insert: {
+          created_at?: string
+          genre_id: string
+          id?: string
+          name: string
+          priority?: number
+        }
+        Update: {
+          created_at?: string
+          genre_id?: string
+          id?: string
+          name?: string
+          priority?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_genres_genre_id_fkey"
+            columns: ["genre_id"]
+            isOneToOne: false
+            referencedRelation: "genres"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       submissions: {
         Row: {
@@ -373,6 +486,59 @@ export type Database = {
           view_count?: number | null
         }
         Relationships: []
+      }
+      videos: {
+        Row: {
+          approved: boolean
+          belowAge: boolean
+          created_at: string
+          creator_id: string
+          id: string
+          reviewed: boolean
+          serie_id: string | null
+          synopsis: string | null
+          thumb_approved: boolean
+          thumbnail: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved?: boolean
+          belowAge?: boolean
+          created_at?: string
+          creator_id: string
+          id?: string
+          reviewed?: boolean
+          serie_id?: string | null
+          synopsis?: string | null
+          thumb_approved?: boolean
+          thumbnail?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved?: boolean
+          belowAge?: boolean
+          created_at?: string
+          creator_id?: string
+          id?: string
+          reviewed?: boolean
+          serie_id?: string | null
+          synopsis?: string | null
+          thumb_approved?: boolean
+          thumbnail?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_serie_id_fkey"
+            columns: ["serie_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
