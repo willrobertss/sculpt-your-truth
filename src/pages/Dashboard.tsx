@@ -72,7 +72,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} />
+      <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} profile={profile} />
       <main className="flex-1 overflow-auto">
         <DashboardMobileHeader activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} />
         <div className="p-6 md:p-10">
