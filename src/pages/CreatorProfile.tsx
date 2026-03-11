@@ -121,7 +121,7 @@ const CreatorProfile = () => {
               <h2 className="font-display text-xl font-bold text-foreground mb-6 flex items-center gap-2"><Smartphone size={18} /> Verticals</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 mb-12">
                 {verticals.map((v) => (
-                  <ShortCard key={v.id} id={v.id} title={v.title} thumbnail_url={v.thumbnail_url || ''} genre={v.genre || []} duration_seconds={v.duration_seconds} />
+                  <ShortCard key={v.id} id={v.id} title={v.title} thumbnail_url={v.thumbnail_url || ''} duration_seconds={v.duration_seconds} />
                 ))}
               </div>
             </>
