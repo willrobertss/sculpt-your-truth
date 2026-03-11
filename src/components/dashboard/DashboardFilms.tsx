@@ -50,16 +50,22 @@ const DashboardFilms = ({ myFilms, onRefresh }: Props) => {
     }
   };
 
-  const handleSaveVideoUrl = async (filmId: string) => {
-    const url = videoUrls[filmId];
-    if (!url) return;
+  const handleVideoUpload = async (filmId: string, file: File) => {
+    setUploadingVideo(filmId);
     try {
-      const { error } = await supabase.from('films').update({ video_url: url }).eq('id', filmId);
+      const ext = file.name.split('.').pop();
+      const path = `${filmId}/video.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('videos').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(path);
+      const { error } = await supabase.from('films').update({ video_url: publicUrl }).eq('id', filmId);
       if (error) throw error;
-      toast({ title: 'Video URL saved!' });
+      toast({ title: 'Video uploaded!' });
       onRefresh?.();
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploadingVideo(null);
     }
   };
 
