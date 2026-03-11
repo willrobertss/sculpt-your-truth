@@ -14,10 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 
 const steps = [
   { icon: Check, label: 'Account' },
-  { icon: Upload, label: 'Upload' },
+  { icon: Upload, label: 'Type' },
   { icon: FileText, label: 'Details' },
   { icon: Shield, label: 'Rights' },
-  { icon: Send, label: 'Submit' },
+  { icon: Send, label: 'Publish' },
 ];
 
 const Submit = () => {
@@ -96,9 +96,9 @@ const Submit = () => {
             <Check size={32} className="text-primary" />
           </motion.div>
           <h1 className="font-display text-3xl font-bold text-foreground mb-3">You're Live!</h1>
-          <p className="font-body text-muted-foreground mb-8">Your content is now live on the platform.</p>
+          <p className="font-body text-muted-foreground mb-8">Now head to your dashboard to upload your video and poster.</p>
           <div className="flex gap-3 justify-center">
-            <GoldButton onClick={() => navigate('/dashboard')}>Go to Dashboard</GoldButton>
+            <GoldButton onClick={() => navigate('/dashboard')}>Upload Assets in Dashboard</GoldButton>
             <GoldButton variant="outline" onClick={() => { setSubmitted(false); setCurrentStep(1); setTitle(''); setSynopsis(''); }}>
               Submit Another
             </GoldButton>
