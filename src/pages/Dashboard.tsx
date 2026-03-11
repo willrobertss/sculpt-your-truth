@@ -82,7 +82,7 @@ const Dashboard = () => {
           {activeTab === 'verticals' && <DashboardVerticals myVerticals={myVerticals} onRefresh={loadData} />}
           {activeTab === 'earnings' && <DashboardEarnings profile={profile} user={user} />}
           {activeTab === 'email' && <DashboardEmail myFilms={myFilms} myShorts={myShorts} profile={profile} user={user} />}
-          {activeTab === 'settings' && <DashboardSettings profile={profile} user={user} />}
+          {activeTab === 'settings' && <DashboardSettings profile={profile} user={user} onProfileUpdate={loadData} />}
         </div>
       </main>
     </div>
