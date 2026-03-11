@@ -255,7 +255,7 @@ const Submit = () => {
                 <div className="flex gap-3">
                   <GoldButton variant="outline" onClick={() => setCurrentStep(3)}>Back</GoldButton>
                   <GoldButton className="flex-1" onClick={handleSubmit} disabled={loading}>
-                    {loading ? 'Submitting...' : 'Submit for Review'}
+                    {loading ? 'Publishing...' : 'Publish'}
                   </GoldButton>
                 </div>
               </div>
