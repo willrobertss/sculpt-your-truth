@@ -166,19 +166,6 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
                   </div>
                 )}
               </div>
-              {editingVideo === v.id && (
-                <div className="p-2 flex gap-1">
-                  <Input
-                    placeholder="Video URL..."
-                    className="h-7 text-xs bg-surface border-border"
-                    value={videoUrls[v.id] || ''}
-                    onChange={(e) => setVideoUrls(prev => ({ ...prev, [v.id]: e.target.value }))}
-                  />
-                  <GoldButton size="sm" className="h-7 text-[10px]" onClick={() => handleSaveVideoUrl(v.id)} disabled={!videoUrls[v.id]}>
-                    Save
-                  </GoldButton>
-                </div>
-              )}
             </div>
           ))}
         </div>
