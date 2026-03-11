@@ -14,10 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 
 const steps = [
   { icon: Check, label: 'Account' },
-  { icon: Upload, label: 'Upload' },
+  { icon: Upload, label: 'Type' },
   { icon: FileText, label: 'Details' },
   { icon: Shield, label: 'Rights' },
-  { icon: Send, label: 'Submit' },
+  { icon: Send, label: 'Publish' },
 ];
 
 const Submit = () => {
