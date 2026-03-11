@@ -1,32 +1,22 @@
 
 
-## Create Submission Notification Emails
+## Remove Approval Gate from Submission Flow
 
-### Problem
-The Submit page calls `supabase.functions.invoke('notify-submission')` but no such edge function exists. It silently fails (caught by try/catch), so no notification emails go out.
-
-### Solution
-Create a `notify-submission` edge function that sends emails to `will@actorwillroberts.com` and `sal@howtoselftape.com` when a creator submits content.
-
-This is a **transactional email** (not an auth email), so we need to set up the transactional email infrastructure.
+### What changes
+The submission flow currently inserts content with `status: 'pending'` and tells users to wait 5-10 days for review. Since we're in test mode, we'll make submissions go live immediately.
 
 ### Steps
 
-1. **Set up email domain** — Required before any emails can be sent. This involves configuring a sender domain through the email setup dialog so the system can send from a real address.
+1. **Update `src/pages/Submit.tsx`**:
+   - Change `status: 'pending'` to `status: 'live'` for all three content types (films, shorts, verticals)
+   - Change the submission record status from `'pending'` to `'live'` as well
+   - Update success message from "submitted for review" to "Your content is now live!"
+   - Update the confirmation screen text — remove the "5-10 business days review" language, replace with "Your content is live on the platform"
+   - Change the submit button text from "Submit for Review" to "Publish"
+   - Remove the `notify-submission` edge function call (no approval needed)
 
-2. **Create the `notify-submission` edge function** at `supabase/functions/notify-submission/index.ts`:
-   - Receives `{ title, contentType, synopsis }` in the request body
-   - Sends an email to both `will@actorwillroberts.com` and `sal@howtoselftape.com`
-   - Email contains the submission details (title, type, synopsis) so admins can review
-   - Uses the Lovable transactional email system
+2. **No database changes needed** — the `submission_status` enum already includes `'live'`
 
-3. **Add config** in `supabase/config.toml` for `[functions.notify-submission]` with `verify_jwt = false`
-
-4. **Deploy** the edge function
-
-### Prerequisites
-Before the edge function can actually send emails, we need a custom email domain configured. Without it, the function will deploy but emails won't deliver.
-
-### Question
-Do you have a domain you'd like to send these notification emails from (e.g., `notify@opprime.tv` or `noreply@opprime.tv`)? We need to set that up first so the emails actually get delivered.
+### Result
+Creators sign up, fill in details, agree to rights, and their content goes live immediately. The approval gateway can be re-added later.
 
