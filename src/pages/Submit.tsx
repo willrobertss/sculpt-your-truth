@@ -58,38 +58,28 @@ const Submit = () => {
 
       if (contentType === 'vertical') {
         table = 'verticals';
-        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const };
+        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'live' as const };
       } else if (contentType === 'short') {
         table = 'shorts';
-        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const };
+        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'live' as const };
       } else {
         table = 'films';
-        insertData = { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'pending' as const };
+        insertData = { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'live' as const };
       }
 
       const { data, error } = await supabase.from(table).insert(insertData).select().single();
       if (error) throw error;
 
       // Create submission record
-      const submissionData: any = { creator_id: user.id, status: 'pending' as const, rights_agreed: true };
+      const submissionData: any = { creator_id: user.id, status: 'live' as const, rights_agreed: true };
       if (contentType === 'short') submissionData.short_id = data.id;
       else if (contentType === 'feature') submissionData.film_id = data.id;
-      // Verticals don't need a submission record for now (no film_id/short_id FK)
       if (contentType !== 'vertical') {
         await supabase.from('submissions').insert(submissionData);
       }
 
-      // Notify admins via edge function
-      try {
-        await supabase.functions.invoke('notify-submission', {
-          body: { title, contentType, synopsis },
-        });
-      } catch (e) {
-        console.warn('Admin notification failed (non-blocking):', e);
-      }
-
       setSubmitted(true);
-      toast({ title: 'Submitted!', description: 'Your content has been submitted for review.' });
+      toast({ title: 'Published!', description: 'Your content is now live on the platform.' });
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
@@ -105,8 +95,8 @@ const Submit = () => {
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex w-20 h-20 rounded-full bg-primary/20 items-center justify-center mb-6 gold-glow">
             <Check size={32} className="text-primary" />
           </motion.div>
-          <h1 className="font-display text-3xl font-bold text-foreground mb-3">Submission Received!</h1>
-          <p className="font-body text-muted-foreground mb-8">Our curatorial team will review your submission within 5-10 business days.</p>
+          <h1 className="font-display text-3xl font-bold text-foreground mb-3">You're Live!</h1>
+          <p className="font-body text-muted-foreground mb-8">Your content is now live on the platform.</p>
           <div className="flex gap-3 justify-center">
             <GoldButton onClick={() => navigate('/dashboard')}>Go to Dashboard</GoldButton>
             <GoldButton variant="outline" onClick={() => { setSubmitted(false); setCurrentStep(1); setTitle(''); setSynopsis(''); }}>
@@ -265,7 +255,7 @@ const Submit = () => {
                 <div className="flex gap-3">
                   <GoldButton variant="outline" onClick={() => setCurrentStep(3)}>Back</GoldButton>
                   <GoldButton className="flex-1" onClick={handleSubmit} disabled={loading}>
-                    {loading ? 'Submitting...' : 'Submit for Review'}
+                    {loading ? 'Publishing...' : 'Publish'}
                   </GoldButton>
                 </div>
               </div>
