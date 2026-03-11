@@ -95,8 +95,8 @@ const Submit = () => {
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex w-20 h-20 rounded-full bg-primary/20 items-center justify-center mb-6 gold-glow">
             <Check size={32} className="text-primary" />
           </motion.div>
-          <h1 className="font-display text-3xl font-bold text-foreground mb-3">Submission Received!</h1>
-          <p className="font-body text-muted-foreground mb-8">Our curatorial team will review your submission within 5-10 business days.</p>
+          <h1 className="font-display text-3xl font-bold text-foreground mb-3">You're Live!</h1>
+          <p className="font-body text-muted-foreground mb-8">Your content is now live on the platform.</p>
           <div className="flex gap-3 justify-center">
             <GoldButton onClick={() => navigate('/dashboard')}>Go to Dashboard</GoldButton>
             <GoldButton variant="outline" onClick={() => { setSubmitted(false); setCurrentStep(1); setTitle(''); setSynopsis(''); }}>
