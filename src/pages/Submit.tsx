@@ -79,7 +79,7 @@ const Submit = () => {
       }
 
       setSubmitted(true);
-      toast({ title: 'Submitted!', description: 'Your content has been submitted for review.' });
+      toast({ title: 'Published!', description: 'Your content is now live on the platform.' });
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
