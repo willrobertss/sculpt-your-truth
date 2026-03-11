@@ -82,6 +82,17 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
           e.target.value = '';
         }}
       />
+      <input
+        type="file"
+        ref={videoInputRef}
+        className="hidden"
+        accept="video/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && videoUploadTarget) handleVideoUpload(videoUploadTarget, file);
+          e.target.value = '';
+        }}
+      />
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display text-2xl font-bold text-foreground">My Verticals</h2>
         <GoldButton size="sm" onClick={() => navigate('/submit')}>+ New Vertical</GoldButton>
