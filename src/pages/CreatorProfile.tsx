@@ -109,7 +109,7 @@ const CreatorProfile = () => {
               <h2 className="font-display text-xl font-bold text-foreground mb-6 flex items-center gap-2"><Tv size={18} /> Shorts</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 mb-12">
                 {shorts.map((s) => (
-                  <ShortCard key={s.id} id={s.id} title={s.title} thumbnail_url={s.thumbnail_url || ''} genre={s.genre || []} duration_seconds={s.duration_seconds} />
+                  <ShortCard key={s.id} id={s.id} title={s.title} thumbnail_url={s.thumbnail_url || ''} duration_seconds={s.duration_seconds} />
                 ))}
               </div>
             </>
