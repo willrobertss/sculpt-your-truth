@@ -79,7 +79,14 @@ const Submit = () => {
         await supabase.from('submissions').insert(submissionData);
       }
 
-      await supabase.from('submissions').insert(submissionData);
+      // Notify admins via edge function
+      try {
+        await supabase.functions.invoke('notify-submission', {
+          body: { title, contentType, synopsis },
+        });
+      } catch (e) {
+        console.warn('Admin notification failed (non-blocking):', e);
+      }
 
       setSubmitted(true);
       toast({ title: 'Submitted!', description: 'Your content has been submitted for review.' });
