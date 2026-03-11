@@ -17,6 +17,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasReferral, setHasReferral] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -28,6 +29,23 @@ const Login = () => {
       setIsSignUp(true); // Default to signup if coming from referral
     }
   }, []);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({ title: 'Reset email sent!', description: 'Check your inbox for a password reset link.' });
+      setForgotPassword(false);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +95,7 @@ const Login = () => {
             <span className="text-primary">.tv</span>
           </a>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-3">
-            {isSignUp ? 'Create Your Creator Account' : 'Welcome Back'}
+            {forgotPassword ? 'Reset Your Password' : isSignUp ? 'Create Your Creator Account' : 'Welcome Back'}
           </p>
           {hasReferral && isSignUp && (
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mt-2">
@@ -86,57 +104,89 @@ const Login = () => {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-card gold-border rounded-sm p-6 space-y-5">
-          {isSignUp && (
+        {forgotPassword ? (
+          <form onSubmit={handleForgotPassword} className="bg-card gold-border rounded-sm p-6 space-y-5">
             <div className="space-y-2">
-              <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Display Name</Label>
+              <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Email</Label>
               <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
                 className="bg-surface border-border"
                 required
               />
             </div>
-          )}
-          <div className="space-y-2">
-            <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Email</Label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="bg-surface border-border"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Password</Label>
-            <div className="relative">
+            <GoldButton type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </GoldButton>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="bg-card gold-border rounded-sm p-6 space-y-5">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Display Name</Label>
+                <Input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Your name"
+                  className="bg-surface border-border"
+                  required
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Email</Label>
               <Input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="bg-surface border-border pr-10"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="bg-surface border-border"
                 required
-                minLength={6}
               />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
             </div>
-          </div>
-          <GoldButton type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
-          </GoldButton>
-        </form>
+            <div className="space-y-2">
+              <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Password</Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-surface border-border pr-10"
+                  required
+                  minLength={6}
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+              {!isSignUp && (
+                <button type="button" onClick={() => setForgotPassword(true)} className="font-mono text-[10px] text-primary hover:text-gold-light transition-colors">
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <GoldButton type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+            </GoldButton>
+          </form>
+        )}
 
         <p className="text-center mt-6 font-mono text-xs text-muted-foreground">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary hover:text-gold-light transition-colors">
-            {isSignUp ? 'Sign In' : 'Sign Up'}
-          </button>
+          {forgotPassword ? (
+            <button onClick={() => setForgotPassword(false)} className="text-primary hover:text-gold-light transition-colors">
+              Back to Sign In
+            </button>
+          ) : (
+            <>
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary hover:text-gold-light transition-colors">
+                {isSignUp ? 'Sign In' : 'Sign Up'}
+              </button>
+            </>
+          )}
         </p>
       </motion.div>
     </div>
