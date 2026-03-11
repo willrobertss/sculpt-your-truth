@@ -50,17 +50,22 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
     }
   };
 
-  const handleSaveVideoUrl = async (verticalId: string) => {
-    const url = videoUrls[verticalId];
-    if (!url) return;
+  const handleVideoUpload = async (verticalId: string, file: File) => {
+    setUploadingVideo(verticalId);
     try {
-      const { error } = await supabase.from('verticals').update({ video_url: url }).eq('id', verticalId);
+      const ext = file.name.split('.').pop();
+      const path = `${verticalId}/video.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('videos').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(path);
+      const { error } = await supabase.from('verticals').update({ video_url: publicUrl }).eq('id', verticalId);
       if (error) throw error;
-      toast({ title: 'Video URL saved!' });
-      setEditingVideo(null);
+      toast({ title: 'Video uploaded!' });
       onRefresh?.();
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploadingVideo(null);
     }
   };
 
