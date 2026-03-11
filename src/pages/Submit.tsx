@@ -29,7 +29,6 @@ const Submit = () => {
   const [genre, setGenre] = useState('');
   const [contentType, setContentType] = useState<'feature' | 'short' | 'vertical'>('feature');
   const [rightsAgreed, setRightsAgreed] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -54,16 +53,20 @@ const Submit = () => {
     setLoading(true);
     try {
       let table: 'shorts' | 'films' | 'verticals';
+      let tabName: string;
       let insertData: any;
 
       if (contentType === 'vertical') {
         table = 'verticals';
+        tabName = 'verticals';
         insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'live' as const };
       } else if (contentType === 'short') {
         table = 'shorts';
+        tabName = 'shorts';
         insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'live' as const };
       } else {
         table = 'films';
+        tabName = 'films';
         insertData = { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'live' as const };
       }
 
@@ -78,36 +81,15 @@ const Submit = () => {
         await supabase.from('submissions').insert(submissionData);
       }
 
-      setSubmitted(true);
-      toast({ title: 'Published!', description: 'Your content is now live on the platform.' });
+      toast({ title: 'Created!', description: 'Now upload your video and poster.' });
+      // Navigate directly to dashboard with the correct tab and editing item
+      navigate(`/dashboard?tab=${tabName}&edit=${data.id}`);
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
   };
-
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-32 pb-20 text-center container mx-auto px-6">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex w-20 h-20 rounded-full bg-primary/20 items-center justify-center mb-6 gold-glow">
-            <Check size={32} className="text-primary" />
-          </motion.div>
-          <h1 className="font-display text-3xl font-bold text-foreground mb-3">You're Live!</h1>
-          <p className="font-body text-muted-foreground mb-8">Now head to your dashboard to upload your video and poster.</p>
-          <div className="flex gap-3 justify-center">
-            <GoldButton onClick={() => navigate('/dashboard')}>Upload Assets in Dashboard</GoldButton>
-            <GoldButton variant="outline" onClick={() => { setSubmitted(false); setCurrentStep(1); setTitle(''); setSynopsis(''); }}>
-              Submit Another
-            </GoldButton>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,6 +98,7 @@ const Submit = () => {
         <div className="container mx-auto px-6 max-w-2xl">
           <div className="text-center mb-10">
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">Submit Your Work</h1>
+            <p className="font-body text-sm text-muted-foreground mb-1">Create your listing first, then upload your video & poster in the dashboard.</p>
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Step {currentStep + 1} of {steps.length}
             </p>
@@ -151,8 +134,8 @@ const Submit = () => {
 
             {currentStep === 1 && (
               <div className="space-y-5">
-                <h2 className="font-display text-xl font-bold text-foreground">Upload</h2>
-                <p className="font-body text-sm text-muted-foreground">Select your content type. Video upload will be available once your submission is approved.</p>
+                <h2 className="font-display text-xl font-bold text-foreground">What are you uploading?</h2>
+                <p className="font-body text-sm text-muted-foreground">Select your content type. You'll upload your video file in the next step.</p>
                 <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={() => setContentType('feature')}
@@ -233,7 +216,8 @@ const Submit = () => {
 
             {currentStep === 4 && (
               <div className="space-y-5 text-center">
-                <h2 className="font-display text-xl font-bold text-foreground">Review & Submit</h2>
+                <h2 className="font-display text-xl font-bold text-foreground">Review & Publish</h2>
+                <p className="font-body text-sm text-muted-foreground">After publishing, you'll be taken to your dashboard to upload your video and poster.</p>
                 <div className="bg-surface rounded-sm p-4 text-left space-y-2">
                   <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">Title</p>
                   <p className="text-foreground text-sm">{title}</p>
@@ -255,7 +239,7 @@ const Submit = () => {
                 <div className="flex gap-3">
                   <GoldButton variant="outline" onClick={() => setCurrentStep(3)}>Back</GoldButton>
                   <GoldButton className="flex-1" onClick={handleSubmit} disabled={loading}>
-                    {loading ? 'Publishing...' : 'Publish'}
+                    {loading ? 'Publishing...' : 'Publish & Upload Assets →'}
                   </GoldButton>
                 </div>
               </div>

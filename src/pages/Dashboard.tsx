@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import DashboardMobileHeader from '@/components/dashboard/DashboardMobileHeader';
@@ -12,15 +12,29 @@ import DashboardSettings from '@/components/dashboard/DashboardSettings';
 import DashboardEarnings from '@/components/dashboard/DashboardEarnings';
 
 const Dashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [isAdmin, setIsAdmin] = useState(false);
   const [myFilms, setMyFilms] = useState<any[]>([]);
   const [myShorts, setMyShorts] = useState<any[]>([]);
   const [myVerticals, setMyVerticals] = useState<any[]>([]);
   const [stats, setStats] = useState({ views: 0, active: 0, pending: 0 });
+  const [editingId, setEditingId] = useState<string | null>(searchParams.get('edit'));
   const navigate = useNavigate();
+
+  // Sync tab to URL
+  const handleSetActiveTab = (tab: string) => {
+    setActiveTab(tab);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tab);
+      next.delete('edit');
+      return next;
+    });
+    setEditingId(null);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -72,14 +86,14 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} profile={profile} />
+      <DashboardSidebar activeTab={activeTab} setActiveTab={handleSetActiveTab} isAdmin={isAdmin} onLogout={handleLogout} profile={profile} />
       <main className="flex-1 overflow-auto">
-        <DashboardMobileHeader activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} />
+        <DashboardMobileHeader activeTab={activeTab} setActiveTab={handleSetActiveTab} isAdmin={isAdmin} onLogout={handleLogout} />
         <div className="p-6 md:p-10">
           {activeTab === 'overview' && <DashboardOverview profile={profile} user={user} stats={stats} myFilms={myFilms} myShorts={myShorts} />}
-          {activeTab === 'films' && <DashboardFilms myFilms={myFilms} onRefresh={loadData} />}
-          {activeTab === 'shorts' && <DashboardShorts myShorts={myShorts} onRefresh={loadData} />}
-          {activeTab === 'verticals' && <DashboardVerticals myVerticals={myVerticals} onRefresh={loadData} />}
+          {activeTab === 'films' && <DashboardFilms myFilms={myFilms} onRefresh={loadData} userId={user.id} editingId={editingId} onClearEdit={() => setEditingId(null)} />}
+          {activeTab === 'shorts' && <DashboardShorts myShorts={myShorts} onRefresh={loadData} userId={user.id} editingId={editingId} onClearEdit={() => setEditingId(null)} />}
+          {activeTab === 'verticals' && <DashboardVerticals myVerticals={myVerticals} onRefresh={loadData} userId={user.id} editingId={editingId} onClearEdit={() => setEditingId(null)} />}
           {activeTab === 'earnings' && <DashboardEarnings profile={profile} user={user} />}
           {activeTab === 'email' && <DashboardEmail myFilms={myFilms} myShorts={myShorts} profile={profile} user={user} />}
           {activeTab === 'settings' && <DashboardSettings profile={profile} user={user} onProfileUpdate={loadData} />}

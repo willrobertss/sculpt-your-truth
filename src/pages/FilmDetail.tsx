@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Play, Clock, Calendar, Eye, ArrowLeft } from 'lucide-react';
+import { Play, Clock, Calendar, Eye, ArrowLeft, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FilmCard from '@/components/FilmCard';
@@ -15,19 +15,18 @@ const FilmDetail = () => {
   const [creatorName, setCreatorName] = useState('');
   const [creatorSlug, setCreatorSlug] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showPlayer, setShowPlayer] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase.from('films').select('*').eq('id', id).single();
       if (data) {
         setFilm(data);
-        // get creator profile
         const { data: profile } = await supabase.from('profiles').select('display_name, slug').eq('user_id', data.creator_id).single();
         if (profile) {
           setCreatorName(profile.display_name || 'Unknown');
           setCreatorSlug(profile.slug || '');
         }
-        // get related films
         const { data: rel } = await supabase.from('films').select('id, title, genre, poster_url, release_year, duration_minutes').eq('status', 'live').neq('id', data.id).limit(4);
         setRelated(rel || []);
       }
@@ -55,6 +54,22 @@ const FilmDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+
+      {/* Video player modal */}
+      {showPlayer && film.video_url && (
+        <div className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center p-4">
+          <button onClick={() => setShowPlayer(false)} className="absolute top-6 right-6 text-foreground hover:text-primary z-10">
+            <X size={28} />
+          </button>
+          <video
+            src={film.video_url}
+            controls
+            autoPlay
+            className="max-w-full max-h-[90vh] rounded-sm"
+          />
+        </div>
+      )}
+
       <section className="relative h-[70vh] overflow-hidden vignette">
         <img src={film.banner_url || film.poster_url || ''} alt={film.title} className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
@@ -75,7 +90,15 @@ const FilmDetail = () => {
               <span className="flex items-center gap-1 text-muted-foreground font-mono text-[10px]"><Eye size={10} /> {(film.view_count || 0).toLocaleString()} views</span>
             </div>
             <div className="flex gap-3">
-              <GoldButton size="lg"><Play size={16} fill="currentColor" className="mr-2" /> Watch Now</GoldButton>
+              {film.video_url ? (
+                <GoldButton size="lg" onClick={() => setShowPlayer(true)}>
+                  <Play size={16} fill="currentColor" className="mr-2" /> Watch Now
+                </GoldButton>
+              ) : (
+                <GoldButton size="lg" disabled>
+                  <Play size={16} fill="currentColor" className="mr-2" /> Coming Soon
+                </GoldButton>
+              )}
               <GoldButton size="lg" variant="outline">+ Watchlist</GoldButton>
             </div>
           </motion.div>

@@ -1,14 +1,16 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Tv, Eye, Upload, Image, Link } from 'lucide-react';
+import { Tv, Eye, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GoldButton from '@/components/GoldButton';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import ContentEditDialog from './ContentEditDialog';
 
 interface Props {
   myShorts: any[];
   onRefresh?: () => void;
+  userId: string;
+  editingId?: string | null;
+  onClearEdit?: () => void;
 }
 
 const statusColor: Record<string, string> = {
@@ -20,78 +22,22 @@ const statusColor: Record<string, string> = {
   rejected: 'bg-destructive/20 text-destructive',
 };
 
-const DashboardShorts = ({ myShorts, onRefresh }: Props) => {
+const DashboardShorts = ({ myShorts, onRefresh, userId, editingId, onClearEdit }: Props) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [uploading, setUploading] = useState<string | null>(null);
-  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const [uploadTarget, setUploadTarget] = useState<string | null>(null);
-  const [videoUploadTarget, setVideoUploadTarget] = useState<string | null>(null);
+  const [editItem, setEditItem] = useState<any>(null);
 
-  const handleThumbnailUpload = async (shortId: string, file: File) => {
-    setUploading(shortId);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `${shortId}/thumb.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('thumbnails').upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('thumbnails').getPublicUrl(path);
-      const { error } = await supabase.from('shorts').update({ thumbnail_url: publicUrl }).eq('id', shortId);
-      if (error) throw error;
-      toast({ title: 'Thumbnail uploaded!' });
-      onRefresh?.();
-    } catch (e: any) {
-      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
-    } finally {
-      setUploading(null);
+  useEffect(() => {
+    if (editingId && myShorts.length > 0) {
+      const found = myShorts.find(s => s.id === editingId);
+      if (found) {
+        setEditItem(found);
+        onClearEdit?.();
+      }
     }
-  };
-
-  const handleVideoUpload = async (shortId: string, file: File) => {
-    setUploadingVideo(shortId);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `${shortId}/video.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('videos').upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(path);
-      const { error } = await supabase.from('shorts').update({ video_url: publicUrl }).eq('id', shortId);
-      if (error) throw error;
-      toast({ title: 'Video uploaded!' });
-      onRefresh?.();
-    } catch (e: any) {
-      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
-    } finally {
-      setUploadingVideo(null);
-    }
-  };
+  }, [editingId, myShorts, onClearEdit]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        accept="image/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file && uploadTarget) handleThumbnailUpload(uploadTarget, file);
-          e.target.value = '';
-        }}
-      />
-      <input
-        type="file"
-        ref={videoInputRef}
-        className="hidden"
-        accept="video/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file && videoUploadTarget) handleVideoUpload(videoUploadTarget, file);
-          e.target.value = '';
-        }}
-      />
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display text-2xl font-bold text-foreground">My Shorts</h2>
         <GoldButton size="sm" onClick={() => navigate('/submit')}>+ New Short</GoldButton>
@@ -101,24 +47,19 @@ const DashboardShorts = ({ myShorts, onRefresh }: Props) => {
           {myShorts.map((s) => (
             <div key={s.id} className="bg-card gold-border rounded-sm p-4 hover:bg-surface-hover transition-colors">
               <div className="flex gap-4 items-center">
-                {s.thumbnail_url ? (
-                  <img src={s.thumbnail_url} alt={s.title} className="w-16 h-20 object-cover rounded-sm" />
-                ) : (
-                  <button
-                    onClick={() => { setUploadTarget(s.id); fileInputRef.current?.click(); }}
-                    className="w-16 h-20 bg-muted rounded-sm flex flex-col items-center justify-center gap-1 hover:bg-muted/80 transition-colors cursor-pointer"
-                    disabled={uploading === s.id}
-                  >
-                    {uploading === s.id ? (
-                      <span className="text-[9px] text-muted-foreground">...</span>
-                    ) : (
-                      <>
-                        <Image size={16} className="text-muted-foreground" />
-                        <span className="font-mono text-[8px] text-muted-foreground">+ Thumb</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                <div
+                  onClick={() => setEditItem(s)}
+                  className="w-16 h-20 rounded-sm overflow-hidden bg-muted flex items-center justify-center cursor-pointer hover:ring-1 hover:ring-primary/50 transition-all relative group"
+                >
+                  {s.thumbnail_url ? (
+                    <img src={s.thumbnail_url} alt={s.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <Tv size={16} className="text-muted-foreground" />
+                  )}
+                  <div className="absolute inset-0 bg-background/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Pencil size={14} className="text-primary" />
+                  </div>
+                </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-sm font-semibold text-foreground truncate">{s.title}</h3>
                   <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
@@ -131,45 +72,16 @@ const DashboardShorts = ({ myShorts, onRefresh }: Props) => {
                     <span className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
                       <Eye size={10} /> {(s.view_count || 0).toLocaleString()}
                     </span>
+                    {!s.video_url && <span className="font-mono text-[10px] text-amber-400">⚠ No video</span>}
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2 items-center">
-                {s.thumbnail_url && (
-                  <button
-                    onClick={() => { setUploadTarget(s.id); fileInputRef.current?.click(); }}
-                    className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-                  >
-                    <Upload size={10} /> Replace Thumbnail
-                  </button>
-                )}
-                {!s.video_url ? (
-                  <button
-                    onClick={() => { setVideoUploadTarget(s.id); videoInputRef.current?.click(); }}
-                    className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-                    disabled={uploadingVideo === s.id}
-                  >
-                    {uploadingVideo === s.id ? (
-                      <span className="flex items-center gap-1"><Upload size={10} className="animate-pulse" /> Uploading...</span>
-                    ) : (
-                      <><Upload size={10} /> Upload Video</>
-                    )}
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] text-emerald-400 flex items-center gap-1">
-                      <Link size={10} /> Video ✓
-                    </span>
-                    <button
-                      onClick={() => { setVideoUploadTarget(s.id); videoInputRef.current?.click(); }}
-                      className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-                      disabled={uploadingVideo === s.id}
-                    >
-                      {uploadingVideo === s.id ? 'Uploading...' : 'Replace'}
-                    </button>
-                  </div>
-                )}
+                <button
+                  onClick={() => setEditItem(s)}
+                  className="w-8 h-8 rounded-sm flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Edit short"
+                >
+                  <Pencil size={14} />
+                </button>
               </div>
             </div>
           ))}
@@ -181,6 +93,15 @@ const DashboardShorts = ({ myShorts, onRefresh }: Props) => {
           <GoldButton className="mt-4" onClick={() => navigate('/submit')}>Upload Short</GoldButton>
         </div>
       )}
+
+      <ContentEditDialog
+        open={!!editItem}
+        onClose={() => setEditItem(null)}
+        item={editItem}
+        contentType="shorts"
+        userId={userId}
+        onSaved={() => onRefresh?.()}
+      />
     </motion.div>
   );
 };
