@@ -1,10 +1,15 @@
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Smartphone, Eye } from 'lucide-react';
+import { Smartphone, Eye, Upload, Image, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GoldButton from '@/components/GoldButton';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   myVerticals: any[];
+  onRefresh?: () => void;
 }
 
 const statusColor: Record<string, string> = {
@@ -16,11 +21,61 @@ const statusColor: Record<string, string> = {
   rejected: 'bg-destructive/20 text-destructive',
 };
 
-const DashboardVerticals = ({ myVerticals }: Props) => {
+const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
+  const [editingVideo, setEditingVideo] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTarget, setUploadTarget] = useState<string | null>(null);
+
+  const handleThumbnailUpload = async (verticalId: string, file: File) => {
+    setUploading(verticalId);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${verticalId}/thumb.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('thumbnails').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('thumbnails').getPublicUrl(path);
+      const { error } = await supabase.from('verticals').update({ thumbnail_url: publicUrl }).eq('id', verticalId);
+      if (error) throw error;
+      toast({ title: 'Thumbnail uploaded!' });
+      onRefresh?.();
+    } catch (e: any) {
+      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const handleSaveVideoUrl = async (verticalId: string) => {
+    const url = videoUrls[verticalId];
+    if (!url) return;
+    try {
+      const { error } = await supabase.from('verticals').update({ video_url: url }).eq('id', verticalId);
+      if (error) throw error;
+      toast({ title: 'Video URL saved!' });
+      setEditingVideo(null);
+      onRefresh?.();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && uploadTarget) handleThumbnailUpload(uploadTarget, file);
+          e.target.value = '';
+        }}
+      />
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display text-2xl font-bold text-foreground">My Verticals</h2>
         <GoldButton size="sm" onClick={() => navigate('/submit')}>+ New Vertical</GoldButton>
@@ -33,9 +88,20 @@ const DashboardVerticals = ({ myVerticals }: Props) => {
                 {v.thumbnail_url ? (
                   <img src={v.thumbnail_url} alt={v.title} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <Smartphone size={24} className="text-muted-foreground" />
-                  </div>
+                  <button
+                    onClick={() => { setUploadTarget(v.id); fileInputRef.current?.click(); }}
+                    className="w-full h-full bg-muted flex flex-col items-center justify-center gap-2 hover:bg-muted/80 transition-colors cursor-pointer"
+                    disabled={uploading === v.id}
+                  >
+                    {uploading === v.id ? (
+                      <span className="text-xs text-muted-foreground">Uploading...</span>
+                    ) : (
+                      <>
+                        <Image size={24} className="text-muted-foreground" />
+                        <span className="font-mono text-[9px] text-muted-foreground">+ Thumbnail</span>
+                      </>
+                    )}
+                  </button>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
                 <div className="absolute bottom-2 left-2 right-2">
@@ -49,7 +115,48 @@ const DashboardVerticals = ({ myVerticals }: Props) => {
                     </span>
                   </div>
                 </div>
+                {/* Upload overlay actions */}
+                <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {v.thumbnail_url && (
+                    <button
+                      onClick={() => { setUploadTarget(v.id); fileInputRef.current?.click(); }}
+                      className="bg-background/80 rounded-sm p-1.5 hover:bg-background transition-colors"
+                      title="Replace thumbnail"
+                    >
+                      <Upload size={12} className="text-foreground" />
+                    </button>
+                  )}
+                  {!v.video_url && (
+                    <button
+                      onClick={() => setEditingVideo(v.id)}
+                      className="bg-background/80 rounded-sm p-1.5 hover:bg-background transition-colors"
+                      title="Add video URL"
+                    >
+                      <Link size={12} className="text-foreground" />
+                    </button>
+                  )}
+                </div>
+                {v.video_url && (
+                  <div className="absolute top-2 left-2">
+                    <span className="font-mono text-[8px] bg-emerald-400/20 text-emerald-400 px-1.5 py-0.5 rounded-sm">
+                      Video ✓
+                    </span>
+                  </div>
+                )}
               </div>
+              {editingVideo === v.id && (
+                <div className="p-2 flex gap-1">
+                  <Input
+                    placeholder="Video URL..."
+                    className="h-7 text-xs bg-surface border-border"
+                    value={videoUrls[v.id] || ''}
+                    onChange={(e) => setVideoUrls(prev => ({ ...prev, [v.id]: e.target.value }))}
+                  />
+                  <GoldButton size="sm" className="h-7 text-[10px]" onClick={() => handleSaveVideoUrl(v.id)} disabled={!videoUrls[v.id]}>
+                    Save
+                  </GoldButton>
+                </div>
+              )}
             </div>
           ))}
         </div>

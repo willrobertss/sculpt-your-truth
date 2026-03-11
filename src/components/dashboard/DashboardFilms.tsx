@@ -1,10 +1,15 @@
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Film, Eye, ExternalLink } from 'lucide-react';
+import { Film, Eye, ExternalLink, Upload, Image, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GoldButton from '@/components/GoldButton';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   myFilms: any[];
+  onRefresh?: () => void;
 }
 
 const statusColor: Record<string, string> = {
@@ -16,11 +21,59 @@ const statusColor: Record<string, string> = {
   rejected: 'bg-destructive/20 text-destructive',
 };
 
-const DashboardFilms = ({ myFilms }: Props) => {
+const DashboardFilms = ({ myFilms, onRefresh }: Props) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTarget, setUploadTarget] = useState<string | null>(null);
+
+  const handlePosterUpload = async (filmId: string, file: File) => {
+    setUploading(filmId);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${filmId}/poster.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('posters').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('posters').getPublicUrl(path);
+      const { error } = await supabase.from('films').update({ poster_url: publicUrl }).eq('id', filmId);
+      if (error) throw error;
+      toast({ title: 'Poster uploaded!' });
+      onRefresh?.();
+    } catch (e: any) {
+      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const handleSaveVideoUrl = async (filmId: string) => {
+    const url = videoUrls[filmId];
+    if (!url) return;
+    try {
+      const { error } = await supabase.from('films').update({ video_url: url }).eq('id', filmId);
+      if (error) throw error;
+      toast({ title: 'Video URL saved!' });
+      onRefresh?.();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && uploadTarget) handlePosterUpload(uploadTarget, file);
+          e.target.value = '';
+        }}
+      />
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display text-2xl font-bold text-foreground">My Films</h2>
         <GoldButton size="sm" onClick={() => navigate('/submit')}>+ New Film</GoldButton>
@@ -28,36 +81,76 @@ const DashboardFilms = ({ myFilms }: Props) => {
       {myFilms.length > 0 ? (
         <div className="space-y-3">
           {myFilms.map((f) => (
-            <div key={f.id} className="flex gap-4 items-center bg-card gold-border rounded-sm p-4 hover:bg-surface-hover transition-colors">
-              {f.poster_url ? (
-                <img src={f.poster_url} alt={f.title} className="w-16 h-20 object-cover rounded-sm" />
-              ) : (
-                <div className="w-16 h-20 bg-muted rounded-sm flex items-center justify-center">
-                  <Film size={20} className="text-muted-foreground" />
+            <div key={f.id} className="bg-card gold-border rounded-sm p-4 hover:bg-surface-hover transition-colors">
+              <div className="flex gap-4 items-center">
+                {f.poster_url ? (
+                  <img src={f.poster_url} alt={f.title} className="w-16 h-20 object-cover rounded-sm" />
+                ) : (
+                  <button
+                    onClick={() => { setUploadTarget(f.id); fileInputRef.current?.click(); }}
+                    className="w-16 h-20 bg-muted rounded-sm flex flex-col items-center justify-center gap-1 hover:bg-muted/80 transition-colors cursor-pointer"
+                    disabled={uploading === f.id}
+                  >
+                    {uploading === f.id ? (
+                      <span className="text-[9px] text-muted-foreground">...</span>
+                    ) : (
+                      <>
+                        <Image size={16} className="text-muted-foreground" />
+                        <span className="font-mono text-[8px] text-muted-foreground">+ Poster</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display text-sm font-semibold text-foreground truncate">{f.title}</h3>
+                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
+                    {(f.genre || []).join(' · ')} {f.duration_minutes ? `· ${f.duration_minutes} min` : ''}
+                  </p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded-sm ${statusColor[f.status] || 'bg-muted text-muted-foreground'}`}>
+                      {f.status}
+                    </span>
+                    <span className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
+                      <Eye size={10} /> {(f.view_count || 0).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-display text-sm font-semibold text-foreground truncate">{f.title}</h3>
-                <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
-                  {(f.genre || []).join(' · ')} {f.duration_minutes ? `· ${f.duration_minutes} min` : ''}
-                </p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded-sm ${statusColor[f.status] || 'bg-muted text-muted-foreground'}`}>
-                    {f.status}
-                  </span>
-                  <span className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
-                    <Eye size={10} /> {(f.view_count || 0).toLocaleString()}
-                  </span>
-                </div>
+                {f.status === 'live' && f.slug && (
+                  <button onClick={() => navigate(`/film/${f.slug}`)} className="text-muted-foreground hover:text-primary transition-colors">
+                    <ExternalLink size={16} />
+                  </button>
+                )}
               </div>
-              {f.status === 'live' && f.slug && (
-                <button
-                  onClick={() => navigate(`/film/${f.slug}`)}
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <ExternalLink size={16} />
-                </button>
-              )}
+
+              {/* Upload actions */}
+              <div className="mt-3 flex flex-wrap gap-2 items-center">
+                {f.poster_url && (
+                  <button
+                    onClick={() => { setUploadTarget(f.id); fileInputRef.current?.click(); }}
+                    className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+                  >
+                    <Upload size={10} /> Replace Poster
+                  </button>
+                )}
+                {!f.video_url ? (
+                  <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <Link size={12} className="text-muted-foreground shrink-0" />
+                    <Input
+                      placeholder="Paste video URL..."
+                      className="h-7 text-xs bg-surface border-border"
+                      value={videoUrls[f.id] || ''}
+                      onChange={(e) => setVideoUrls(prev => ({ ...prev, [f.id]: e.target.value }))}
+                    />
+                    <GoldButton size="sm" className="h-7 text-[10px]" onClick={() => handleSaveVideoUrl(f.id)} disabled={!videoUrls[f.id]}>
+                      Save
+                    </GoldButton>
+                  </div>
+                ) : (
+                  <span className="font-mono text-[10px] text-emerald-400 flex items-center gap-1">
+                    <Link size={10} /> Video linked
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
