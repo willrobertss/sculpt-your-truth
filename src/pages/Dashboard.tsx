@@ -72,7 +72,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} />
+      <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} profile={profile} />
       <main className="flex-1 overflow-auto">
         <DashboardMobileHeader activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} />
         <div className="p-6 md:p-10">
@@ -82,7 +82,7 @@ const Dashboard = () => {
           {activeTab === 'verticals' && <DashboardVerticals myVerticals={myVerticals} onRefresh={loadData} />}
           {activeTab === 'earnings' && <DashboardEarnings profile={profile} user={user} />}
           {activeTab === 'email' && <DashboardEmail myFilms={myFilms} myShorts={myShorts} profile={profile} user={user} />}
-          {activeTab === 'settings' && <DashboardSettings profile={profile} user={user} />}
+          {activeTab === 'settings' && <DashboardSettings profile={profile} user={user} onProfileUpdate={loadData} />}
         </div>
       </main>
     </div>
