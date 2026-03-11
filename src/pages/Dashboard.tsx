@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
@@ -34,32 +34,34 @@ const Dashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    const [profileRes, filmsRes, shortsRes, verticalsRes, adminRes] = await Promise.all([
+      supabase.from('profiles').select('*').eq('user_id', user.id).single(),
+      supabase.from('films').select('*').eq('creator_id', user.id),
+      supabase.from('shorts').select('*').eq('creator_id', user.id),
+      supabase.from('verticals').select('*').eq('creator_id', user.id),
+      supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle(),
+    ]);
+    if (profileRes.data) setProfile(profileRes.data);
+    const films = filmsRes.data || [];
+    const shorts = shortsRes.data || [];
+    const verts = verticalsRes.data || [];
+    setMyFilms(films);
+    setMyShorts(shorts);
+    setMyVerticals(verts);
+    setIsAdmin(!!adminRes.data);
+    const allContent = [...films, ...shorts, ...verts];
+    const totalViews = allContent.reduce((s, f) => s + (f.view_count || 0), 0);
+    const active = allContent.filter(f => f.status === 'live').length;
+    const pending = allContent.filter(f => f.status === 'pending' || f.status === 'in_review').length;
+    setStats({ views: totalViews, active, pending });
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
-    const load = async () => {
-      const [profileRes, filmsRes, shortsRes, verticalsRes, adminRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('user_id', user.id).single(),
-        supabase.from('films').select('*').eq('creator_id', user.id),
-        supabase.from('shorts').select('*').eq('creator_id', user.id),
-        supabase.from('verticals').select('*').eq('creator_id', user.id),
-        supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle(),
-      ]);
-      if (profileRes.data) setProfile(profileRes.data);
-      const films = filmsRes.data || [];
-      const shorts = shortsRes.data || [];
-      const verts = verticalsRes.data || [];
-      setMyFilms(films);
-      setMyShorts(shorts);
-      setMyVerticals(verts);
-      setIsAdmin(!!adminRes.data);
-      const allContent = [...films, ...shorts, ...verts];
-      const totalViews = allContent.reduce((s, f) => s + (f.view_count || 0), 0);
-      const active = allContent.filter(f => f.status === 'live').length;
-      const pending = allContent.filter(f => f.status === 'pending' || f.status === 'in_review').length;
-      setStats({ views: totalViews, active, pending });
-    };
-    load();
-  }, [user]);
+    loadData();
+  }, [user, loadData]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -75,9 +77,9 @@ const Dashboard = () => {
         <DashboardMobileHeader activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} onLogout={handleLogout} />
         <div className="p-6 md:p-10">
           {activeTab === 'overview' && <DashboardOverview profile={profile} user={user} stats={stats} myFilms={myFilms} myShorts={myShorts} />}
-          {activeTab === 'films' && <DashboardFilms myFilms={myFilms} />}
-          {activeTab === 'shorts' && <DashboardShorts myShorts={myShorts} />}
-          {activeTab === 'verticals' && <DashboardVerticals myVerticals={myVerticals} />}
+          {activeTab === 'films' && <DashboardFilms myFilms={myFilms} onRefresh={loadData} />}
+          {activeTab === 'shorts' && <DashboardShorts myShorts={myShorts} onRefresh={loadData} />}
+          {activeTab === 'verticals' && <DashboardVerticals myVerticals={myVerticals} onRefresh={loadData} />}
           {activeTab === 'earnings' && <DashboardEarnings profile={profile} user={user} />}
           {activeTab === 'email' && <DashboardEmail myFilms={myFilms} myShorts={myShorts} profile={profile} user={user} />}
           {activeTab === 'settings' && <DashboardSettings profile={profile} user={user} />}
