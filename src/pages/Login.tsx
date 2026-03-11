@@ -95,7 +95,7 @@ const Login = () => {
             <span className="text-primary">.tv</span>
           </a>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-3">
-            {isSignUp ? 'Create Your Creator Account' : 'Welcome Back'}
+            {forgotPassword ? 'Reset Your Password' : isSignUp ? 'Create Your Creator Account' : 'Welcome Back'}
           </p>
           {hasReferral && isSignUp && (
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mt-2">
