@@ -37,6 +37,7 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/verticals" element={<Verticals />} />
           <Route path="/ref/:slug" element={<ReferralLanding />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
