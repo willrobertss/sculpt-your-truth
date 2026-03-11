@@ -58,34 +58,24 @@ const Submit = () => {
 
       if (contentType === 'vertical') {
         table = 'verticals';
-        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const };
+        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'live' as const };
       } else if (contentType === 'short') {
         table = 'shorts';
-        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'pending' as const };
+        insertData = { creator_id: user.id, title, description: synopsis, genre: genre.split(',').map(g => g.trim()), status: 'live' as const };
       } else {
         table = 'films';
-        insertData = { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'pending' as const };
+        insertData = { creator_id: user.id, title, synopsis, genre: genre.split(',').map(g => g.trim()), content_type: contentType as any, status: 'live' as const };
       }
 
       const { data, error } = await supabase.from(table).insert(insertData).select().single();
       if (error) throw error;
 
       // Create submission record
-      const submissionData: any = { creator_id: user.id, status: 'pending' as const, rights_agreed: true };
+      const submissionData: any = { creator_id: user.id, status: 'live' as const, rights_agreed: true };
       if (contentType === 'short') submissionData.short_id = data.id;
       else if (contentType === 'feature') submissionData.film_id = data.id;
-      // Verticals don't need a submission record for now (no film_id/short_id FK)
       if (contentType !== 'vertical') {
         await supabase.from('submissions').insert(submissionData);
-      }
-
-      // Notify admins via edge function
-      try {
-        await supabase.functions.invoke('notify-submission', {
-          body: { title, contentType, synopsis },
-        });
-      } catch (e) {
-        console.warn('Admin notification failed (non-blocking):', e);
       }
 
       setSubmitted(true);
