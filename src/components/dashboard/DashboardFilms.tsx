@@ -25,9 +25,11 @@ const DashboardFilms = ({ myFilms, onRefresh }: Props) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
-  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
+  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
+  const [videoUploadTarget, setVideoUploadTarget] = useState<string | null>(null);
 
   const handlePosterUpload = async (filmId: string, file: File) => {
     setUploading(filmId);
