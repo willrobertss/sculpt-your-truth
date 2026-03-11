@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Tv, Eye, Upload, Image, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GoldButton from '@/components/GoldButton';
-import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
