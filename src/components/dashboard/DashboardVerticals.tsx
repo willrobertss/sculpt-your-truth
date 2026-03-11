@@ -25,10 +25,11 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
-  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
-  const [editingVideo, setEditingVideo] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
+  const [videoUploadTarget, setVideoUploadTarget] = useState<string | null>(null);
 
   const handleThumbnailUpload = async (verticalId: string, file: File) => {
     setUploading(verticalId);
