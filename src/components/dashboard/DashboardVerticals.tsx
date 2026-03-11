@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Smartphone, Eye, Upload, Image, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GoldButton from '@/components/GoldButton';
-import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,10 +24,11 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
-  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
-  const [editingVideo, setEditingVideo] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
+  const [videoUploadTarget, setVideoUploadTarget] = useState<string | null>(null);
 
   const handleThumbnailUpload = async (verticalId: string, file: File) => {
     setUploading(verticalId);
@@ -49,17 +49,22 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
     }
   };
 
-  const handleSaveVideoUrl = async (verticalId: string) => {
-    const url = videoUrls[verticalId];
-    if (!url) return;
+  const handleVideoUpload = async (verticalId: string, file: File) => {
+    setUploadingVideo(verticalId);
     try {
-      const { error } = await supabase.from('verticals').update({ video_url: url }).eq('id', verticalId);
+      const ext = file.name.split('.').pop();
+      const path = `${verticalId}/video.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('videos').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(path);
+      const { error } = await supabase.from('verticals').update({ video_url: publicUrl }).eq('id', verticalId);
       if (error) throw error;
-      toast({ title: 'Video URL saved!' });
-      setEditingVideo(null);
+      toast({ title: 'Video uploaded!' });
       onRefresh?.();
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploadingVideo(null);
     }
   };
 
@@ -73,6 +78,17 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file && uploadTarget) handleThumbnailUpload(uploadTarget, file);
+          e.target.value = '';
+        }}
+      />
+      <input
+        type="file"
+        ref={videoInputRef}
+        className="hidden"
+        accept="video/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && videoUploadTarget) handleVideoUpload(videoUploadTarget, file);
           e.target.value = '';
         }}
       />
@@ -128,11 +144,16 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
                   )}
                   {!v.video_url && (
                     <button
-                      onClick={() => setEditingVideo(v.id)}
+                      onClick={() => { setVideoUploadTarget(v.id); videoInputRef.current?.click(); }}
                       className="bg-background/80 rounded-sm p-1.5 hover:bg-background transition-colors"
-                      title="Add video URL"
+                      title="Upload video"
+                      disabled={uploadingVideo === v.id}
                     >
-                      <Link size={12} className="text-foreground" />
+                      {uploadingVideo === v.id ? (
+                        <Upload size={12} className="text-foreground animate-pulse" />
+                      ) : (
+                        <Upload size={12} className="text-foreground" />
+                      )}
                     </button>
                   )}
                 </div>
@@ -144,19 +165,6 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
                   </div>
                 )}
               </div>
-              {editingVideo === v.id && (
-                <div className="p-2 flex gap-1">
-                  <Input
-                    placeholder="Video URL..."
-                    className="h-7 text-xs bg-surface border-border"
-                    value={videoUrls[v.id] || ''}
-                    onChange={(e) => setVideoUrls(prev => ({ ...prev, [v.id]: e.target.value }))}
-                  />
-                  <GoldButton size="sm" className="h-7 text-[10px]" onClick={() => handleSaveVideoUrl(v.id)} disabled={!videoUrls[v.id]}>
-                    Save
-                  </GoldButton>
-                </div>
-              )}
             </div>
           ))}
         </div>

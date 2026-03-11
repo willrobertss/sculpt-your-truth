@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Tv, Eye, Upload, Image, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GoldButton from '@/components/GoldButton';
-import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,9 +24,11 @@ const DashboardShorts = ({ myShorts, onRefresh }: Props) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
-  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
+  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
+  const [videoUploadTarget, setVideoUploadTarget] = useState<string | null>(null);
 
   const handleThumbnailUpload = async (shortId: string, file: File) => {
     setUploading(shortId);
@@ -48,16 +49,22 @@ const DashboardShorts = ({ myShorts, onRefresh }: Props) => {
     }
   };
 
-  const handleSaveVideoUrl = async (shortId: string) => {
-    const url = videoUrls[shortId];
-    if (!url) return;
+  const handleVideoUpload = async (shortId: string, file: File) => {
+    setUploadingVideo(shortId);
     try {
-      const { error } = await supabase.from('shorts').update({ video_url: url }).eq('id', shortId);
+      const ext = file.name.split('.').pop();
+      const path = `${shortId}/video.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('videos').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(path);
+      const { error } = await supabase.from('shorts').update({ video_url: publicUrl }).eq('id', shortId);
       if (error) throw error;
-      toast({ title: 'Video URL saved!' });
+      toast({ title: 'Video uploaded!' });
       onRefresh?.();
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploadingVideo(null);
     }
   };
 
@@ -71,6 +78,17 @@ const DashboardShorts = ({ myShorts, onRefresh }: Props) => {
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file && uploadTarget) handleThumbnailUpload(uploadTarget, file);
+          e.target.value = '';
+        }}
+      />
+      <input
+        type="file"
+        ref={videoInputRef}
+        className="hidden"
+        accept="video/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && videoUploadTarget) handleVideoUpload(videoUploadTarget, file);
           e.target.value = '';
         }}
       />
@@ -127,22 +145,30 @@ const DashboardShorts = ({ myShorts, onRefresh }: Props) => {
                   </button>
                 )}
                 {!s.video_url ? (
-                  <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                    <Link size={12} className="text-muted-foreground shrink-0" />
-                    <Input
-                      placeholder="Paste video URL..."
-                      className="h-7 text-xs bg-surface border-border"
-                      value={videoUrls[s.id] || ''}
-                      onChange={(e) => setVideoUrls(prev => ({ ...prev, [s.id]: e.target.value }))}
-                    />
-                    <GoldButton size="sm" className="h-7 text-[10px]" onClick={() => handleSaveVideoUrl(s.id)} disabled={!videoUrls[s.id]}>
-                      Save
-                    </GoldButton>
-                  </div>
+                  <button
+                    onClick={() => { setVideoUploadTarget(s.id); videoInputRef.current?.click(); }}
+                    className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+                    disabled={uploadingVideo === s.id}
+                  >
+                    {uploadingVideo === s.id ? (
+                      <span className="flex items-center gap-1"><Upload size={10} className="animate-pulse" /> Uploading...</span>
+                    ) : (
+                      <><Upload size={10} /> Upload Video</>
+                    )}
+                  </button>
                 ) : (
-                  <span className="font-mono text-[10px] text-emerald-400 flex items-center gap-1">
-                    <Link size={10} /> Video linked
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] text-emerald-400 flex items-center gap-1">
+                      <Link size={10} /> Video ✓
+                    </span>
+                    <button
+                      onClick={() => { setVideoUploadTarget(s.id); videoInputRef.current?.click(); }}
+                      className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+                      disabled={uploadingVideo === s.id}
+                    >
+                      {uploadingVideo === s.id ? 'Uploading...' : 'Replace'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
