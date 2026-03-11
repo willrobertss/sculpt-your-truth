@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, Play, Volume2, VolumeX, Heart } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -9,11 +9,13 @@ const Shorts = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [muted, setMuted] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [playing, setPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     supabase
       .from('shorts')
-      .select('id, title, description, thumbnail_url, duration_seconds, genre, view_count')
+      .select('id, title, description, thumbnail_url, video_url, duration_seconds, genre, view_count')
       .eq('status', 'live')
       .order('created_at', { ascending: false })
       .then(({ data }) => {
@@ -22,8 +24,26 @@ const Shorts = () => {
       });
   }, []);
 
+  useEffect(() => {
+    setPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+  }, [currentIndex]);
+
   const goNext = () => setCurrentIndex((p) => Math.min(p + 1, shorts.length - 1));
   const goPrev = () => setCurrentIndex((p) => Math.max(p - 1, 0));
+
+  const handlePlayToggle = () => {
+    if (!videoRef.current) return;
+    if (playing) {
+      videoRef.current.pause();
+      setPlaying(false);
+    } else {
+      videoRef.current.play();
+      setPlaying(true);
+    }
+  };
 
   if (loading) return (
     <div className="h-screen bg-background flex items-center justify-center">
@@ -56,18 +76,41 @@ const Shorts = () => {
               transition={{ duration: 0.4 }}
               className="absolute inset-0 rounded-sm overflow-hidden gold-border"
             >
-              <img
-                src={short.thumbnail_url || 'https://images.unsplash.com/photo-1518676590747-1e3dcf5a3aaf?w=360&h=640&fit=crop'}
-                alt={short.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-background/30" />
-
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center gold-border cursor-pointer hover:bg-primary/40 transition-colors">
-                  <Play size={24} fill="hsl(var(--primary))" className="text-primary ml-1" />
-                </div>
-              </div>
+              {short.video_url ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    src={short.video_url}
+                    muted={muted}
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover"
+                    poster={short.thumbnail_url || undefined}
+                    onClick={handlePlayToggle}
+                  />
+                  {!playing && (
+                    <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={handlePlayToggle}>
+                      <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center gold-border hover:bg-primary/40 transition-colors">
+                        <Play size={24} fill="hsl(var(--primary))" className="text-primary ml-1" />
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <img
+                    src={short.thumbnail_url || 'https://images.unsplash.com/photo-1518676590747-1e3dcf5a3aaf?w=360&h=640&fit=crop'}
+                    alt={short.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-background/80 backdrop-blur-sm rounded-sm px-4 py-2">
+                      <p className="font-mono text-xs text-muted-foreground">Video coming soon</p>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-background/30 pointer-events-none" />
 
               <div className="absolute right-4 bottom-32 flex flex-col items-center gap-5">
                 <button className="flex flex-col items-center gap-1">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, Play, Volume2, VolumeX, Heart, Share2, Smartphone } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -9,6 +9,8 @@ const Verticals = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [muted, setMuted] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [playing, setPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     supabase
@@ -22,10 +24,27 @@ const Verticals = () => {
       });
   }, []);
 
+  useEffect(() => {
+    setPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+  }, [currentIndex]);
+
   const goNext = useCallback(() => setCurrentIndex((p) => Math.min(p + 1, verticals.length - 1)), [verticals.length]);
   const goPrev = useCallback(() => setCurrentIndex((p) => Math.max(p - 1, 0)), []);
 
-  // Keyboard & scroll navigation
+  const handlePlayToggle = () => {
+    if (!videoRef.current) return;
+    if (playing) {
+      videoRef.current.pause();
+      setPlaying(false);
+    } else {
+      videoRef.current.play();
+      setPlaying(true);
+    }
+  };
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown' || e.key === 'j') goNext();
@@ -35,7 +54,6 @@ const Verticals = () => {
     return () => window.removeEventListener('keydown', handleKey);
   }, [goNext, goPrev]);
 
-  // Touch swipe
   useEffect(() => {
     let touchStartY = 0;
     const handleTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
@@ -96,19 +114,41 @@ const Verticals = () => {
               transition={{ duration: 0.35, ease: 'easeOut' }}
               className="absolute inset-0 rounded-sm overflow-hidden gold-border"
             >
-              <img
-                src={vertical.thumbnail_url || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=360&h=640&fit=crop'}
-                alt={vertical.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-background/20" />
-
-              {/* Center play button */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center gold-border cursor-pointer hover:bg-primary/40 transition-colors">
-                  <Play size={24} fill="hsl(var(--primary))" className="text-primary ml-1" />
-                </div>
-              </div>
+              {vertical.video_url ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    src={vertical.video_url}
+                    muted={muted}
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover"
+                    poster={vertical.thumbnail_url || undefined}
+                    onClick={handlePlayToggle}
+                  />
+                  {!playing && (
+                    <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={handlePlayToggle}>
+                      <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center gold-border hover:bg-primary/40 transition-colors">
+                        <Play size={24} fill="hsl(var(--primary))" className="text-primary ml-1" />
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <img
+                    src={vertical.thumbnail_url || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=360&h=640&fit=crop'}
+                    alt={vertical.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-background/80 backdrop-blur-sm rounded-sm px-4 py-2">
+                      <p className="font-mono text-xs text-muted-foreground">Video coming soon</p>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-background/20 pointer-events-none" />
 
               {/* Right side actions */}
               <div className="absolute right-4 bottom-36 flex flex-col items-center gap-6">

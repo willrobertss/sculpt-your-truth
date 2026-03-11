@@ -1,15 +1,16 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Film, Eye, ExternalLink, Upload, Image, Link } from 'lucide-react';
+import { Film, Eye, ExternalLink, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GoldButton from '@/components/GoldButton';
-import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import ContentEditDialog from './ContentEditDialog';
 
 interface Props {
   myFilms: any[];
   onRefresh?: () => void;
+  userId: string;
+  editingId?: string | null;
+  onClearEdit?: () => void;
 }
 
 const statusColor: Record<string, string> = {
@@ -21,78 +22,23 @@ const statusColor: Record<string, string> = {
   rejected: 'bg-destructive/20 text-destructive',
 };
 
-const DashboardFilms = ({ myFilms, onRefresh }: Props) => {
+const DashboardFilms = ({ myFilms, onRefresh, userId, editingId, onClearEdit }: Props) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [uploading, setUploading] = useState<string | null>(null);
-  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const [uploadTarget, setUploadTarget] = useState<string | null>(null);
-  const [videoUploadTarget, setVideoUploadTarget] = useState<string | null>(null);
+  const [editItem, setEditItem] = useState<any>(null);
 
-  const handlePosterUpload = async (filmId: string, file: File) => {
-    setUploading(filmId);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `${filmId}/poster.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('posters').upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('posters').getPublicUrl(path);
-      const { error } = await supabase.from('films').update({ poster_url: publicUrl }).eq('id', filmId);
-      if (error) throw error;
-      toast({ title: 'Poster uploaded!' });
-      onRefresh?.();
-    } catch (e: any) {
-      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
-    } finally {
-      setUploading(null);
+  // Auto-open editor if editingId is set from URL
+  useEffect(() => {
+    if (editingId && myFilms.length > 0) {
+      const found = myFilms.find(f => f.id === editingId);
+      if (found) {
+        setEditItem(found);
+        onClearEdit?.();
+      }
     }
-  };
-
-  const handleVideoUpload = async (filmId: string, file: File) => {
-    setUploadingVideo(filmId);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `${filmId}/video.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('videos').upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(path);
-      const { error } = await supabase.from('films').update({ video_url: publicUrl }).eq('id', filmId);
-      if (error) throw error;
-      toast({ title: 'Video uploaded!' });
-      onRefresh?.();
-    } catch (e: any) {
-      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
-    } finally {
-      setUploadingVideo(null);
-    }
-  };
+  }, [editingId, myFilms, onClearEdit]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        accept="image/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file && uploadTarget) handlePosterUpload(uploadTarget, file);
-          e.target.value = '';
-        }}
-      />
-      <input
-        type="file"
-        ref={videoInputRef}
-        className="hidden"
-        accept="video/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file && videoUploadTarget) handleVideoUpload(videoUploadTarget, file);
-          e.target.value = '';
-        }}
-      />
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display text-2xl font-bold text-foreground">My Films</h2>
         <GoldButton size="sm" onClick={() => navigate('/submit')}>+ New Film</GoldButton>
@@ -102,24 +48,19 @@ const DashboardFilms = ({ myFilms, onRefresh }: Props) => {
           {myFilms.map((f) => (
             <div key={f.id} className="bg-card gold-border rounded-sm p-4 hover:bg-surface-hover transition-colors">
               <div className="flex gap-4 items-center">
-                {f.poster_url ? (
-                  <img src={f.poster_url} alt={f.title} className="w-16 h-20 object-cover rounded-sm" />
-                ) : (
-                  <button
-                    onClick={() => { setUploadTarget(f.id); fileInputRef.current?.click(); }}
-                    className="w-16 h-20 bg-muted rounded-sm flex flex-col items-center justify-center gap-1 hover:bg-muted/80 transition-colors cursor-pointer"
-                    disabled={uploading === f.id}
-                  >
-                    {uploading === f.id ? (
-                      <span className="text-[9px] text-muted-foreground">...</span>
-                    ) : (
-                      <>
-                        <Image size={16} className="text-muted-foreground" />
-                        <span className="font-mono text-[8px] text-muted-foreground">+ Poster</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                <div
+                  onClick={() => setEditItem(f)}
+                  className="w-16 h-20 rounded-sm overflow-hidden bg-muted flex items-center justify-center cursor-pointer hover:ring-1 hover:ring-primary/50 transition-all relative group"
+                >
+                  {f.poster_url ? (
+                    <img src={f.poster_url} alt={f.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <Film size={16} className="text-muted-foreground" />
+                  )}
+                  <div className="absolute inset-0 bg-background/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Pencil size={14} className="text-primary" />
+                  </div>
+                </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-sm font-semibold text-foreground truncate">{f.title}</h3>
                   <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
@@ -132,51 +73,28 @@ const DashboardFilms = ({ myFilms, onRefresh }: Props) => {
                     <span className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
                       <Eye size={10} /> {(f.view_count || 0).toLocaleString()}
                     </span>
+                    {!f.video_url && (
+                      <span className="font-mono text-[10px] text-amber-400">⚠ No video</span>
+                    )}
+                    {!f.poster_url && (
+                      <span className="font-mono text-[10px] text-amber-400">⚠ No poster</span>
+                    )}
                   </div>
                 </div>
-                {f.status === 'live' && f.slug && (
-                  <button onClick={() => navigate(`/film/${f.slug}`)} className="text-muted-foreground hover:text-primary transition-colors">
-                    <ExternalLink size={16} />
-                  </button>
-                )}
-              </div>
-
-              {/* Upload actions */}
-              <div className="mt-3 flex flex-wrap gap-2 items-center">
-                {f.poster_url && (
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => { setUploadTarget(f.id); fileInputRef.current?.click(); }}
-                    className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+                    onClick={() => setEditItem(f)}
+                    className="w-8 h-8 rounded-sm flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                    title="Edit film"
                   >
-                    <Upload size={10} /> Replace Poster
+                    <Pencil size={14} />
                   </button>
-                )}
-                {!f.video_url ? (
-                  <button
-                    onClick={() => { setVideoUploadTarget(f.id); videoInputRef.current?.click(); }}
-                    className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-                    disabled={uploadingVideo === f.id}
-                  >
-                    {uploadingVideo === f.id ? (
-                      <span className="flex items-center gap-1"><Upload size={10} className="animate-pulse" /> Uploading...</span>
-                    ) : (
-                      <><Upload size={10} /> Upload Video</>
-                    )}
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] text-emerald-400 flex items-center gap-1">
-                      <Link size={10} /> Video ✓
-                    </span>
-                    <button
-                      onClick={() => { setVideoUploadTarget(f.id); videoInputRef.current?.click(); }}
-                      className="font-mono text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-                      disabled={uploadingVideo === f.id}
-                    >
-                      {uploadingVideo === f.id ? 'Uploading...' : 'Replace'}
+                  {f.status === 'live' && f.slug && (
+                    <button onClick={() => navigate(`/film/${f.slug}`)} className="text-muted-foreground hover:text-primary transition-colors">
+                      <ExternalLink size={16} />
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -188,6 +106,15 @@ const DashboardFilms = ({ myFilms, onRefresh }: Props) => {
           <GoldButton className="mt-4" onClick={() => navigate('/submit')}>Upload Film</GoldButton>
         </div>
       )}
+
+      <ContentEditDialog
+        open={!!editItem}
+        onClose={() => setEditItem(null)}
+        item={editItem}
+        contentType="films"
+        userId={userId}
+        onSaved={() => onRefresh?.()}
+      />
     </motion.div>
   );
 };

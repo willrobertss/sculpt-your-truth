@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Loader2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,14 +22,26 @@ const DashboardSettings = ({ profile, user, onProfileUpdate }: Props) => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [displayName, setDisplayName] = useState(profile?.display_name || '');
-  const [bio, setBio] = useState(profile?.bio || '');
-  const [location, setLocation] = useState(profile?.location || '');
-  const [website, setWebsite] = useState(profile?.website || '');
-  const [genreFocus, setGenreFocus] = useState<string[]>(profile?.genre_focus || []);
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [location, setLocation] = useState('');
+  const [website, setWebsite] = useState('');
+  const [genreFocus, setGenreFocus] = useState<string[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Sync form state when profile loads or changes
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.display_name || '');
+      setBio(profile.bio || '');
+      setLocation(profile.location || '');
+      setWebsite(profile.website || '');
+      setGenreFocus(profile.genre_focus || []);
+      setAvatarUrl(profile.avatar_url || '');
+    }
+  }, [profile]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
