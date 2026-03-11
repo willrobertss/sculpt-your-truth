@@ -145,11 +145,16 @@ const DashboardVerticals = ({ myVerticals, onRefresh }: Props) => {
                   )}
                   {!v.video_url && (
                     <button
-                      onClick={() => setEditingVideo(v.id)}
+                      onClick={() => { setVideoUploadTarget(v.id); videoInputRef.current?.click(); }}
                       className="bg-background/80 rounded-sm p-1.5 hover:bg-background transition-colors"
-                      title="Add video URL"
+                      title="Upload video"
+                      disabled={uploadingVideo === v.id}
                     >
-                      <Link size={12} className="text-foreground" />
+                      {uploadingVideo === v.id ? (
+                        <Upload size={12} className="text-foreground animate-pulse" />
+                      ) : (
+                        <Upload size={12} className="text-foreground" />
+                      )}
                     </button>
                   )}
                 </div>
