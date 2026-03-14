@@ -245,6 +245,19 @@ const ContentEditDialog = ({ open, onClose, item, contentType, userId, onSaved }
             </div>
           </div>
 
+          {/* AI Poster Generator */}
+          <div>
+            <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">AI Poster</label>
+            <PosterGenerator
+              videoId={item.id}
+              videoTitle={title}
+              synopsis={description}
+              currentThumbnail={posterPreview}
+              onGenerated={() => onSaved()}
+              table={contentType}
+            />
+          </div>
+
           <Button onClick={handleSave} disabled={saving || !title} className="w-full">
             {saving ? <><Loader2 size={14} className="animate-spin mr-2" /> Saving...</> : 'Save Changes'}
           </Button>
