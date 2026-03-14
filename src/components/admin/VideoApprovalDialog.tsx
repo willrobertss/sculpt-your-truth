@@ -137,7 +137,10 @@ const VideoApprovalDialog = ({ video, open, onOpenChange, onAction }: VideoAppro
             videoTitle={video.title}
             synopsis={video.synopsis}
             currentThumbnail={thumbSrc}
-            onGenerated={() => onAction()}
+            onGenerated={async (url) => {
+              await supabase.from('videos').update({ poster_url: url }).eq('id', video.id);
+              onAction();
+            }}
             table="videos"
           />
         </div>
