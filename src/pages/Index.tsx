@@ -1,19 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Film, Tv, Upload, Star, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import FilmCard from '@/components/FilmCard';
-import ShortCard from '@/components/ShortCard';
-import CreatorCard from '@/components/CreatorCard';
-import ContentRow from '@/components/ContentRow';
 import GoldButton from '@/components/GoldButton';
 import TestimonialCard from '@/components/TestimonialCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { faqItems } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
+import { opprimeClient, getThumbnailUrl } from '@/lib/opprime-client';
 import heroImage from '@/assets/hero-filmset.jpg';
 import logo from '@/assets/logo.png';
 
@@ -26,31 +23,72 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
+interface OPVideo {
+  id: string;
+  title: string;
+  thumbnail: string | null;
+  genre_id: string | null;
+  serie_id: string | null;
+  approved: boolean;
+}
+
+interface OPGenre {
+  id: string;
+  name: string;
+}
+
+interface OPSeries {
+  id: string;
+  title: string;
+}
+
 const Index = () => {
   const [email, setEmail] = useState('');
   const [testimonials, setTestimonials] = useState<Array<{ id: string; name: string; role: string; quote: string; avatar_url: string | null; rating: number }>>([]);
-  const [films, setFilms] = useState<any[]>([]);
-  const [shorts, setShorts] = useState<any[]>([]);
-  const [verticals, setVerticals] = useState<any[]>([]);
-  const [creators, setCreators] = useState<any[]>([]);
+  const [videos, setVideos] = useState<OPVideo[]>([]);
+  const [genres, setGenres] = useState<OPGenre[]>([]);
+  const [series, setSeries] = useState<OPSeries[]>([]);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch all data in parallel
+    // Fetch testimonials from Lovable Cloud + video content from external OPPRIME project
     Promise.all([
       supabase.from('testimonials').select('id, name, role, quote, avatar_url, rating').eq('is_active', true).order('display_order'),
-      supabase.from('films').select('id, title, tagline, genre, duration_minutes, release_year, poster_url, featured, view_count').eq('status', 'live').order('created_at', { ascending: false }).limit(12),
-      supabase.from('shorts').select('id, title, description, thumbnail_url, duration_seconds, genre, view_count').eq('status', 'live').order('created_at', { ascending: false }).limit(8),
-      supabase.from('profiles').select('id, display_name, slug, avatar_url, bio, genre_focus, user_id').limit(8),
-      supabase.from('verticals').select('id, title, description, thumbnail_url, duration_seconds, genre, view_count').eq('status', 'live').order('created_at', { ascending: false }).limit(8),
-    ]).then(([t, f, s, c, v]) => {
+      opprimeClient.from('videos').select('*').eq('approved', true),
+      opprimeClient.from('genres').select('*'),
+      opprimeClient.from('series').select('*'),
+    ]).then(([t, v, g, s]) => {
       if (t.data) setTestimonials(t.data);
-      if (f.data) setFilms(f.data);
-      if (s.data) setShorts(s.data);
-      if (c.data) setCreators(c.data.map(p => ({ ...p, film_count: 0 })));
-      if (v.data) setVerticals(v.data);
+      if (v.data) setVideos(v.data as OPVideo[]);
+      if (g.data) setGenres(g.data as OPGenre[]);
+      if (s.data) setSeries(s.data as OPSeries[]);
     });
   }, []);
+
+  const filteredVideos = useMemo(() => {
+    if (!selectedGenre) return videos;
+    return videos.filter(v => v.genre_id === selectedGenre);
+  }, [videos, selectedGenre]);
+
+  // Group videos: standalone vs series
+  const { standaloneVideos, seriesGroups } = useMemo(() => {
+    const standalone: OPVideo[] = [];
+    const grouped: Record<string, OPVideo[]> = {};
+
+    filteredVideos.forEach(v => {
+      if (v.serie_id) {
+        if (!grouped[v.serie_id]) grouped[v.serie_id] = [];
+        grouped[v.serie_id].push(v);
+      } else {
+        standalone.push(v);
+      }
+    });
+
+    return { standaloneVideos: standalone, seriesGroups: grouped };
+  }, [filteredVideos]);
+
+  const getSeriesTitle = (id: string) => series.find(s => s.id === id)?.title || 'Series';
 
   const marqueeText = '★ NEW RELEASES EVERY WEEK ★ INDEPENDENT CINEMA ★ CREATOR-FIRST PLATFORM ★ SHORTS & FEATURES ★ GLOBAL STORYTELLERS ★ ';
 
@@ -68,9 +106,6 @@ const Index = () => {
     { title: 'Global Reach', desc: 'Your film, available worldwide from day one.' },
     { title: 'Zero Fees', desc: 'Free to submit. Free to host. We only earn when you do.' },
   ];
-
-  const dramaFilms = films.filter(f => (f.genre || []).includes('Drama'));
-  const docFilms = films.filter(f => (f.genre || []).includes('Documentary'));
 
   return (
     <div className="min-h-screen bg-background">
@@ -130,46 +165,71 @@ const Index = () => {
         </div>
       </div>
 
-      {/* ─── CONTENT ROWS ─── */}
-      <div className="py-8">
-        {films.length > 0 && (
-          <ContentRow title="New Releases" viewAllLink="/browse">
-            {films.slice(0, 8).map((film) => (
-              <FilmCard key={film.id} id={film.id} title={film.title} genre={film.genre || []} poster_url={film.poster_url || ''} release_year={film.release_year} duration_minutes={film.duration_minutes} />
+      {/* ─── GENRE FILTER BAR ─── */}
+      {genres.length > 0 && (
+        <div className="container mx-auto px-6 pt-8">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedGenre(null)}
+              className={`px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-widest transition-colors ${
+                !selectedGenre
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground hover:text-foreground border border-border'
+              }`}
+            >
+              All
+            </button>
+            {genres.map(g => (
+              <button
+                key={g.id}
+                onClick={() => setSelectedGenre(g.id)}
+                className={`px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-widest transition-colors ${
+                  selectedGenre === g.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-card text-muted-foreground hover:text-foreground border border-border'
+                }`}
+              >
+                {g.name}
+              </button>
             ))}
-          </ContentRow>
+          </div>
+        </div>
+      )}
+
+      {/* ─── VIDEO GRID ─── */}
+      <div className="container mx-auto px-6 py-8">
+        {/* Series groups */}
+        {Object.entries(seriesGroups).map(([serieId, episodes]) => (
+          <div key={serieId} className="mb-10">
+            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4">
+              <span className="text-primary">Series:</span> {getSeriesTitle(serieId)}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {episodes.map(v => (
+                <VideoCard key={v.id} video={v} />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Standalone videos */}
+        {standaloneVideos.length > 0 && (
+          <div>
+            {Object.keys(seriesGroups).length > 0 && (
+              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4">Standalone Films</h2>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {standaloneVideos.map(v => (
+                <VideoCard key={v.id} video={v} />
+              ))}
+            </div>
+          </div>
         )}
 
-        {shorts.length > 0 && (
-          <ContentRow title="Short Films" viewAllLink="/shorts">
-            {shorts.map((short) => (
-              <ShortCard key={short.id} {...short} />
-            ))}
-          </ContentRow>
-        )}
-
-        {verticals.length > 0 && (
-          <ContentRow title="Verticals" viewAllLink="/verticals">
-            {verticals.map((v) => (
-              <ShortCard key={v.id} id={v.id} title={v.title} thumbnail_url={v.thumbnail_url || ''} duration_seconds={v.duration_seconds} view_count={v.view_count} />
-            ))}
-          </ContentRow>
-        )}
-
-        {dramaFilms.length > 0 && (
-          <ContentRow title="Featured Dramas" viewAllLink="/browse?genre=drama">
-            {dramaFilms.map((film) => (
-              <FilmCard key={film.id} id={film.id} title={film.title} genre={film.genre || []} poster_url={film.poster_url || ''} release_year={film.release_year} duration_minutes={film.duration_minutes} />
-            ))}
-          </ContentRow>
-        )}
-
-        {docFilms.length > 0 && (
-          <ContentRow title="Documentaries" viewAllLink="/browse?genre=documentary">
-            {docFilms.map((film) => (
-              <FilmCard key={film.id} id={film.id} title={film.title} genre={film.genre || []} poster_url={film.poster_url || ''} release_year={film.release_year} duration_minutes={film.duration_minutes} />
-            ))}
-          </ContentRow>
+        {filteredVideos.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground font-mono text-sm">No videos found{selectedGenre ? ' for this genre' : ''}.</p>
+          </div>
         )}
       </div>
 
@@ -216,15 +276,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ─── CREATOR SPOTLIGHT ─── */}
-      {creators.length > 0 && (
-        <ContentRow title="Creator Spotlight">
-          {creators.map((creator) => (
-            <CreatorCard key={creator.id} {...creator} />
-          ))}
-        </ContentRow>
-      )}
-
       {/* ─── FAQ ─── */}
       <section className="py-20 bg-noir-light">
         <div className="container mx-auto px-6 max-w-2xl">
@@ -264,5 +315,27 @@ const Index = () => {
     </div>
   );
 };
+
+/* ─── Video Thumbnail Card ─── */
+const VideoCard = ({ video }: { video: OPVideo }) => (
+  <Link to={`/watch/${video.id}`} className="group block">
+    <motion.div
+      whileHover={{ scale: 1.03, y: -4 }}
+      transition={{ duration: 0.3 }}
+      className="relative overflow-hidden rounded-sm aspect-video gold-border"
+    >
+      <img
+        src={getThumbnailUrl(video.thumbnail)}
+        alt={video.title}
+        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        loading="lazy"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    </motion.div>
+    <h3 className="font-display text-sm font-semibold text-foreground mt-2 truncate group-hover:text-primary transition-colors">
+      {video.title}
+    </h3>
+  </Link>
+);
 
 export default Index;
