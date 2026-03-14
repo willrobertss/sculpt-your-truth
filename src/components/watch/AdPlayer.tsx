@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface AdData {
   id: string;
@@ -11,117 +11,81 @@ interface AdData {
 
 interface AdPlayerProps {
   ads: AdData[];
-  mainVideoRef: React.RefObject<HTMLVideoElement | null>;
+  mainVideoRef?: React.RefObject<HTMLVideoElement | null>;
   onAllPreRollsDone: () => void;
+  onMidRollDone?: () => void;
+  onPostRollDone?: () => void;
+  mode: 'pre_roll' | 'mid_roll' | 'post_roll';
 }
 
-const AdPlayer = ({ ads, mainVideoRef, onAllPreRollsDone }: AdPlayerProps) => {
+const AdPlayer = ({ ads, mainVideoRef, onAllPreRollsDone, onMidRollDone, onPostRollDone, mode }: AdPlayerProps) => {
   const adVideoRef = useRef<HTMLVideoElement>(null);
+  const [queue, setQueue] = useState<AdData[]>([]);
   const [playingAd, setPlayingAd] = useState<AdData | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [canSkip, setCanSkip] = useState(false);
-  const [preRollQueue, setPreRollQueue] = useState<AdData[]>([]);
-  const [preRollDone, setPreRollDone] = useState(false);
-  const [midRollPlayed, setMidRollPlayed] = useState<Set<string>>(new Set());
-  const [postRollQueue, setPostRollQueue] = useState<AdData[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
-  const preRolls = ads.filter(a => a.placement === 'pre_roll');
-  const midRolls = ads.filter(a => a.placement === 'mid_roll');
-  const postRolls = ads.filter(a => a.placement === 'post_roll');
-
-  // Start pre-rolls on mount
+  // Build queue on mount based on mode
   useEffect(() => {
-    if (preRolls.length > 0) {
-      setPreRollQueue(preRolls);
+    const filtered = ads.filter(a => a.placement === mode);
+    if (filtered.length > 0) {
+      setQueue(filtered);
     } else {
-      setPreRollDone(true);
-      onAllPreRollsDone();
+      // No ads for this mode, immediately signal done
+      if (mode === 'pre_roll') onAllPreRollsDone();
+      if (mode === 'mid_roll') onMidRollDone?.();
+      if (mode === 'post_roll') onPostRollDone?.();
     }
+    setInitialized(true);
   }, []);
 
-  // Play next pre-roll from queue
+  // Play next from queue
   useEffect(() => {
-    if (preRollQueue.length > 0 && !playingAd) {
-      const next = preRollQueue[0];
+    if (!initialized) return;
+    if (queue.length > 0 && !playingAd) {
+      const [next, ...rest] = queue;
       setPlayingAd(next);
-      setPreRollQueue(prev => prev.slice(1));
-    } else if (preRollQueue.length === 0 && !playingAd && !preRollDone) {
-      setPreRollDone(true);
-      onAllPreRollsDone();
+      setQueue(rest);
+    } else if (queue.length === 0 && !playingAd && initialized) {
+      // All ads in this mode are done
+      if (mode === 'pre_roll') onAllPreRollsDone();
+      if (mode === 'mid_roll') onMidRollDone?.();
+      if (mode === 'post_roll') onPostRollDone?.();
     }
-  }, [preRollQueue, playingAd, preRollDone]);
+  }, [queue, playingAd, initialized]);
 
-  // Mid-roll: listen to main video timeupdate
-  useEffect(() => {
-    const video = mainVideoRef.current;
-    if (!video || midRolls.length === 0) return;
-
-    const handleTimeUpdate = () => {
-      if (playingAd) return;
-      const currentTime = video.currentTime;
-      for (const ad of midRolls) {
-        if (ad.trigger_at_seconds && !midRollPlayed.has(ad.id) && currentTime >= ad.trigger_at_seconds) {
-          video.pause();
-          setPlayingAd(ad);
-          setMidRollPlayed(prev => new Set(prev).add(ad.id));
-          break;
-        }
-      }
-    };
-
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [midRolls, playingAd, midRollPlayed]);
-
-  // Post-roll: listen for main video ended
-  useEffect(() => {
-    const video = mainVideoRef.current;
-    if (!video || postRolls.length === 0) return;
-
-    const handleEnded = () => {
-      if (postRolls.length > 0) {
-        setPostRollQueue(postRolls);
-      }
-    };
-
-    video.addEventListener('ended', handleEnded);
-    return () => video.removeEventListener('ended', handleEnded);
-  }, [postRolls]);
-
-  // Play next post-roll
-  useEffect(() => {
-    if (postRollQueue.length > 0 && !playingAd) {
-      const next = postRollQueue[0];
-      setPlayingAd(next);
-      setPostRollQueue(prev => prev.slice(1));
-    }
-  }, [postRollQueue, playingAd]);
-
-  // Countdown & skip timer
+  // Countdown using ad video timeupdate
   useEffect(() => {
     if (!playingAd) { setRemaining(0); setCanSkip(false); return; }
     setRemaining(playingAd.duration_seconds);
     setCanSkip(false);
 
     const skipTimer = setTimeout(() => setCanSkip(true), 5000);
-    const countdownInterval = setInterval(() => {
-      setRemaining(prev => Math.max(0, prev - 1));
-    }, 1000);
 
-    return () => { clearTimeout(skipTimer); clearInterval(countdownInterval); };
+    const adVideo = adVideoRef.current;
+    const handleTimeUpdate = () => {
+      if (adVideo) {
+        const left = Math.max(0, Math.ceil((adVideo.duration || playingAd.duration_seconds) - adVideo.currentTime));
+        setRemaining(left);
+      }
+    };
+
+    adVideo?.addEventListener('timeupdate', handleTimeUpdate);
+
+    return () => {
+      clearTimeout(skipTimer);
+      adVideo?.removeEventListener('timeupdate', handleTimeUpdate);
+    };
   }, [playingAd]);
 
-  const handleAdEnded = () => {
-    const wasPreOrMid = playingAd?.placement;
+  const handleAdEnded = useCallback(() => {
     setPlayingAd(null);
-    if (wasPreOrMid === 'mid_roll') {
-      mainVideoRef.current?.play();
-    }
-  };
+  }, []);
 
-  const handleSkip = () => {
+  const handleSkip = useCallback(() => {
     handleAdEnded();
-  };
+  }, [handleAdEnded]);
 
   if (!playingAd) return null;
 
@@ -136,7 +100,6 @@ const AdPlayer = ({ ads, mainVideoRef, onAllPreRollsDone }: AdPlayerProps) => {
         onEnded={handleAdEnded}
         onError={handleAdEnded}
       />
-      {/* Overlay */}
       <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded font-mono text-xs text-white uppercase tracking-wider">
         Ad · {remaining}s remaining
       </div>

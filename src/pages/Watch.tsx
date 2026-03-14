@@ -18,6 +18,8 @@ interface Video {
   approved: boolean;
 }
 
+type PlayerMode = 'loading' | 'pre_roll' | 'playing' | 'mid_roll' | 'post_roll' | 'done';
+
 const Watch = () => {
   const { id } = useParams<{ id: string }>();
   const [video, setVideo] = useState<Video | null>(null);
@@ -30,7 +32,8 @@ const Watch = () => {
   // Ad state
   const [adData, setAdData] = useState<any[]>([]);
   const [adsReady, setAdsReady] = useState(false);
-  const [preRollDone, setPreRollDone] = useState(false);
+  const [playerMode, setPlayerMode] = useState<PlayerMode>('loading');
+  const [midRollPlayed, setMidRollPlayed] = useState<Set<string>>(new Set());
 
   // Social state
   const [userId, setUserId] = useState<string | null>(null);
@@ -77,7 +80,7 @@ const Watch = () => {
 
   // Fetch ads for this video
   useEffect(() => {
-    if (!id) { setAdsReady(true); return; }
+    if (!id) { setAdsReady(true); setPlayerMode('playing'); return; }
     console.log('[Watch] Fetching ad placements for video_id:', id);
     supabase
       .from('ad_placements')
@@ -98,35 +101,64 @@ const Watch = () => {
               trigger_at_seconds: p.trigger_at_seconds,
             }));
           setAdData(mapped);
-          if (mapped.some((a: any) => a.placement === 'pre_roll')) {
-            setPreRollDone(false);
-          } else {
-            setPreRollDone(true);
-          }
+          const hasPreRoll = mapped.some((a: any) => a.placement === 'pre_roll');
+          setPlayerMode(hasPreRoll ? 'pre_roll' : 'playing');
         } else {
-          setPreRollDone(true);
+          setPlayerMode('playing');
         }
         setAdsReady(true);
       });
   }, [id]);
 
+  // Mid-roll: listen to main video timeupdate
+  useEffect(() => {
+    const videoEl = mainVideoRef.current;
+    if (!videoEl || playerMode !== 'playing') return;
+    const midRolls = adData.filter(a => a.placement === 'mid_roll');
+    if (midRolls.length === 0) return;
+
+    const handleTimeUpdate = () => {
+      const currentTime = videoEl.currentTime;
+      for (const ad of midRolls) {
+        if (ad.trigger_at_seconds && !midRollPlayed.has(ad.id) && currentTime >= ad.trigger_at_seconds) {
+          videoEl.pause();
+          setMidRollPlayed(prev => new Set(prev).add(ad.id));
+          setPlayerMode('mid_roll');
+          break;
+        }
+      }
+    };
+
+    videoEl.addEventListener('timeupdate', handleTimeUpdate);
+    return () => videoEl.removeEventListener('timeupdate', handleTimeUpdate);
+  }, [adData, playerMode, midRollPlayed]);
+
+  // Post-roll: listen for main video ended
+  useEffect(() => {
+    const videoEl = mainVideoRef.current;
+    if (!videoEl || playerMode !== 'playing') return;
+    const postRolls = adData.filter(a => a.placement === 'post_roll');
+    if (postRolls.length === 0) return;
+
+    const handleEnded = () => {
+      setPlayerMode('post_roll');
+    };
+
+    videoEl.addEventListener('ended', handleEnded);
+    return () => videoEl.removeEventListener('ended', handleEnded);
+  }, [adData, playerMode]);
+
   // Fetch likes & comments
   useEffect(() => {
     if (!id) return;
-
-    // Likes count
     supabase.from('video_likes').select('id', { count: 'exact' }).eq('video_id', id).then(({ count }) => {
       setLikeCount(count || 0);
     });
-
-    // Check if user liked
     if (userId) {
       supabase.from('video_likes').select('id').eq('video_id', id).eq('user_id', userId).then(({ data }) => {
         setLiked(!!(data && data.length > 0));
       });
     }
-
-    // Comments
     supabase
       .from('video_comments')
       .select('*')
@@ -140,7 +172,6 @@ const Watch = () => {
   const handleLike = async () => {
     if (!userId) { toast.error('Sign in to like videos'); return; }
     if (!id) return;
-
     if (liked) {
       await supabase.from('video_likes').delete().eq('video_id', id).eq('user_id', userId);
       setLiked(false);
@@ -185,61 +216,106 @@ const Watch = () => {
     );
   }
 
+  const renderPlayer = () => {
+    if (!videoUrl) {
+      return (
+        <div className="aspect-video bg-card rounded-sm overflow-hidden gold-border relative">
+          <img src={getThumbnailUrl(video.thumbnail)} alt={video.title} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3">
+            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+              <span className="text-2xl">🎬</span>
+            </div>
+            <p className="text-white font-display text-lg font-semibold">Coming Soon</p>
+            <p className="text-white/60 font-mono text-xs uppercase tracking-wider">This video is being prepared</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="aspect-video bg-black rounded-sm overflow-hidden gold-border relative">
+        {/* PRE-ROLL: only ad player, no main video in DOM */}
+        {playerMode === 'pre_roll' && adsReady && (
+          <AdPlayer
+            ads={adData}
+            mode="pre_roll"
+            onAllPreRollsDone={() => {
+              console.log('[Watch] Pre-rolls done, starting main video');
+              setPlayerMode('playing');
+            }}
+          />
+        )}
+
+        {/* PLAYING: main video only */}
+        {(playerMode === 'playing' || playerMode === 'mid_roll' || playerMode === 'post_roll') && (
+          <video
+            ref={mainVideoRef}
+            src={videoUrl}
+            controls={playerMode === 'playing'}
+            autoPlay={playerMode === 'playing'}
+            muted
+            playsInline
+            crossOrigin="anonymous"
+            preload="metadata"
+            className="w-full h-full"
+            poster={getThumbnailUrl(video.thumbnail)}
+            onError={() => {
+              console.error('Video failed to load:', videoUrl);
+              setVideoUrl('');
+            }}
+          />
+        )}
+
+        {/* MID-ROLL: ad overlay on top of paused main video */}
+        {playerMode === 'mid_roll' && (
+          <AdPlayer
+            ads={adData.filter(a => midRollPlayed.has(a.id))}
+            mainVideoRef={mainVideoRef}
+            mode="mid_roll"
+            onAllPreRollsDone={() => {}}
+            onMidRollDone={() => {
+              console.log('[Watch] Mid-roll done, resuming main video');
+              setPlayerMode('playing');
+              mainVideoRef.current?.play();
+            }}
+          />
+        )}
+
+        {/* POST-ROLL: ad overlay after main video ends */}
+        {playerMode === 'post_roll' && (
+          <AdPlayer
+            ads={adData}
+            mainVideoRef={mainVideoRef}
+            mode="post_roll"
+            onAllPreRollsDone={() => {}}
+            onPostRollDone={() => {
+              console.log('[Watch] Post-rolls done');
+              setPlayerMode('done');
+            }}
+          />
+        )}
+
+        {/* LOADING: waiting for ad data */}
+        {playerMode === 'loading' && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6 font-mono text-xs uppercase tracking-widest">
           <ArrowLeft size={14} /> Back to Library
         </Link>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Player + Info (75%) */}
           <div className="flex-1 lg:w-3/4">
-            {videoUrl ? (
-              <div className="aspect-video bg-black rounded-sm overflow-hidden gold-border relative">
-                {/* Ad overlay */}
-                {adsReady && adData.length > 0 && (
-                  <AdPlayer
-                    ads={adData}
-                    mainVideoRef={mainVideoRef}
-                    onAllPreRollsDone={() => setPreRollDone(true)}
-                  />
-                )}
-                <video
-                  ref={mainVideoRef}
-                  src={videoUrl}
-                  controls={preRollDone}
-                  autoPlay={preRollDone}
-                  muted
-                  playsInline
-                  crossOrigin="anonymous"
-                  preload="metadata"
-                  className="w-full h-full"
-                  poster={getThumbnailUrl(video.thumbnail)}
-                  onError={() => {
-                    console.error('Video failed to load:', videoUrl);
-                    setVideoUrl('');
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="aspect-video bg-card rounded-sm overflow-hidden gold-border relative">
-                <img
-                  src={getThumbnailUrl(video.thumbnail)}
-                  alt={video.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                    <span className="text-2xl">🎬</span>
-                  </div>
-                  <p className="text-white font-display text-lg font-semibold">Coming Soon</p>
-                  <p className="text-white/60 font-mono text-xs uppercase tracking-wider">This video is being prepared</p>
-                </div>
-              </div>
-            )}
+            {renderPlayer()}
 
             <div className="mt-6">
               <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{video.title}</h1>
@@ -251,26 +327,14 @@ const Watch = () => {
               )}
             </div>
 
-            {/* Series sidebar (below on desktop too if exists) */}
             {seriesEpisodes.length > 0 && (
               <div className="mt-8">
                 <h3 className="font-display text-lg font-semibold text-foreground mb-4">More from this Series</h3>
                 <div className="flex gap-3 overflow-x-auto pb-2">
                   {seriesEpisodes.map((ep) => (
-                    <Link
-                      key={ep.id}
-                      to={`/watch/${ep.id}`}
-                      className="flex-shrink-0 w-40 group"
-                    >
-                      <img
-                        src={getThumbnailUrl(ep.thumbnail)}
-                        alt={ep.title}
-                        className="w-40 h-24 object-cover rounded-sm"
-                        loading="lazy"
-                      />
-                      <p className="font-display text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 mt-1">
-                        {ep.title}
-                      </p>
+                    <Link key={ep.id} to={`/watch/${ep.id}`} className="flex-shrink-0 w-40 group">
+                      <img src={getThumbnailUrl(ep.thumbnail)} alt={ep.title} className="w-40 h-24 object-cover rounded-sm" loading="lazy" />
+                      <p className="font-display text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 mt-1">{ep.title}</p>
                     </Link>
                   ))}
                 </div>
@@ -278,7 +342,6 @@ const Watch = () => {
             )}
           </div>
 
-          {/* Right: Social Spotlight */}
           <SocialSpotlight
             videoId={id!}
             userId={userId}
@@ -293,7 +356,6 @@ const Watch = () => {
           />
         </div>
       </div>
-
       <Footer />
     </div>
   );
