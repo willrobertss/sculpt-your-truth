@@ -104,6 +104,7 @@ const Admin = () => {
             <VideoPoolSection />
           </div>
         )}
+        {activeTab === 'ads' && <AdsManager />}
         {activeTab === 'financials' && <FinancialsPanel />}
         {activeTab === 'management' && (
           <div className="space-y-12">
