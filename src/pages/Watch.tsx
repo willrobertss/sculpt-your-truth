@@ -75,6 +75,38 @@ const Watch = () => {
       });
   }, [id]);
 
+  // Fetch ads for this video
+  useEffect(() => {
+    if (!id) { setAdsReady(true); return; }
+    supabase
+      .from('ad_placements')
+      .select('*, ads(*)')
+      .eq('video_id', id)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const mapped = data
+            .filter((p: any) => p.ads?.is_active)
+            .map((p: any) => ({
+              id: p.id,
+              video_url: p.ads.video_url,
+              title: p.ads.title,
+              duration_seconds: p.ads.duration_seconds,
+              placement: p.placement,
+              trigger_at_seconds: p.trigger_at_seconds,
+            }));
+          setAdData(mapped);
+          if (mapped.some((a: any) => a.placement === 'pre_roll')) {
+            setPreRollDone(false);
+          } else {
+            setPreRollDone(true);
+          }
+        } else {
+          setPreRollDone(true);
+        }
+        setAdsReady(true);
+      });
+  }, [id]);
+
   // Fetch likes & comments
   useEffect(() => {
     if (!id) return;
