@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Plus, ThumbsUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { getThumbnailUrl } from '@/lib/opprime-client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface VideoHoverCardProps {
   id: string;
@@ -20,10 +21,13 @@ const VideoHoverCard = ({ id, title, thumbnail, poster_url, synopsis, genre_name
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMobile = useIsMobile();
 
   const imgSrc = poster_url || (thumbnail?.startsWith('http') ? thumbnail : getThumbnailUrl(thumbnail));
+  const watchUrl = `${linkPrefix}/${id}`;
 
   const handleMouseEnter = () => {
+    if (isMobile) return;
     timeoutRef.current = setTimeout(() => setHovered(true), 300);
   };
 
@@ -35,6 +39,31 @@ const VideoHoverCard = ({ id, title, thumbnail, poster_url, synopsis, genre_name
 
   const cardWidth = vertical ? 'w-[150px] md:w-[180px]' : 'w-[220px] md:w-[260px]';
   const aspectClass = vertical ? 'aspect-[9/16]' : 'aspect-video';
+
+  // On mobile, the entire card is a simple link — no hover behavior
+  if (isMobile) {
+    return (
+      <Link
+        to={watchUrl}
+        className={`relative flex-shrink-0 ${cardWidth} block`}
+        style={{ scrollSnapAlign: 'start' }}
+      >
+        <div className="rounded-md overflow-hidden">
+          <div className={`${aspectClass} relative`}>
+            <img src={imgSrc} alt={title} className="w-full h-full object-cover" loading="lazy" />
+          </div>
+        </div>
+        <h3 className="font-display text-sm font-semibold text-foreground truncate mt-2">
+          {title}
+        </h3>
+        {genre_name && (
+          <span className="inline-block font-mono text-[9px] uppercase tracking-widest text-primary mt-1">
+            {genre_name}
+          </span>
+        )}
+      </Link>
+    );
+  }
 
   return (
     <div
@@ -68,7 +97,7 @@ const VideoHoverCard = ({ id, title, thumbnail, poster_url, synopsis, genre_name
           <div className="bg-card p-3 space-y-2">
             <div className="flex items-center gap-2">
               <Link
-                to={`${linkPrefix}/${id}`}
+                to={watchUrl}
                 className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center hover:bg-foreground/80 transition-colors"
               >
                 <Play size={14} className="text-background ml-0.5" fill="currentColor" />
@@ -106,7 +135,7 @@ const VideoHoverCard = ({ id, title, thumbnail, poster_url, synopsis, genre_name
 
       {/* Non-hover fallback title */}
       {!hovered && (
-        <Link to={`${linkPrefix}/${id}`} className="block mt-2">
+        <Link to={watchUrl} className="block mt-2">
           <h3 className="font-display text-sm font-semibold text-foreground truncate hover:text-primary transition-colors">
             {title}
           </h3>
