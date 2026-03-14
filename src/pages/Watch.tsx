@@ -161,12 +161,13 @@ const Watch = () => {
                   src={videoUrl}
                   controls
                   autoPlay
+                  crossOrigin="anonymous"
+                  preload="metadata"
                   className="w-full h-full"
                   poster={getThumbnailUrl(video.thumbnail)}
                   onError={() => {
                     console.error('Video failed to load:', videoUrl);
                     setVideoUrl('');
-                    toast.error('This video is currently unavailable');
                   }}
                 />
               </div>
