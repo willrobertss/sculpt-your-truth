@@ -47,12 +47,24 @@ interface OPSeries {
   title: string;
 }
 
+interface Vertical {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  genre: string[] | null;
+  status: string;
+}
+
+const VERTICAL_GENRES = ['Drama', 'Comedy'];
+
 const Index = () => {
   const [email, setEmail] = useState('');
   const [testimonials, setTestimonials] = useState<Array<{ id: string; name: string; role: string; quote: string; avatar_url: string | null; rating: number }>>([]);
   const [videos, setVideos] = useState<OPVideo[]>([]);
   const [genres, setGenres] = useState<OPGenre[]>([]);
   const [series, setSeries] = useState<OPSeries[]>([]);
+  const [verticals, setVerticals] = useState<Vertical[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,11 +73,13 @@ const Index = () => {
       opprimeClient.from('videos').select('*'),
       opprimeClient.from('genres').select('*'),
       opprimeClient.from('series').select('*'),
-    ]).then(([t, v, g, s]) => {
+      supabase.from('verticals').select('*').eq('status', 'live'),
+    ]).then(([t, v, g, s, vt]) => {
       if (t.data) setTestimonials(t.data);
       if (v.data) setVideos(v.data as OPVideo[]);
       if (g.data) setGenres(g.data as OPGenre[]);
       if (s.data) setSeries(s.data as OPSeries[]);
+      if (vt.data) setVerticals(vt.data as Vertical[]);
     });
   }, []);
 
@@ -118,6 +132,20 @@ const Index = () => {
   const recentVideos = useMemo(() => {
     return [...videos].sort((a, b) => (b as any).created_at > (a as any).created_at ? 1 : -1).slice(0, 20);
   }, [videos]);
+
+  // Verticals grouped by genre
+  const verticalRows = useMemo(() => {
+    const rows: { genre: string; items: Vertical[] }[] = [];
+    VERTICAL_GENRES.forEach(genre => {
+      const items = verticals.filter(v => v.genre?.some(g => g.toLowerCase() === genre.toLowerCase()));
+      if (items.length > 0) rows.push({ genre: `Vertical ${genre}`, items });
+    });
+    // Catch-all for verticals not in Drama/Comedy
+    const categorized = new Set(rows.flatMap(r => r.items.map(i => i.id)));
+    const uncategorized = verticals.filter(v => !categorized.has(v.id));
+    if (uncategorized.length > 0) rows.push({ genre: 'Verticals', items: uncategorized });
+    return rows;
+  }, [verticals]);
 
   const marqueeText = '★ NEW RELEASES EVERY WEEK ★ INDEPENDENT CINEMA ★ CREATOR-FIRST PLATFORM ★ SHORTS & FEATURES ★ GLOBAL STORYTELLERS ★ ';
 
@@ -224,7 +252,25 @@ const Index = () => {
           </ContentRow>
         ))}
 
-        {videos.length === 0 && (
+        {/* ─── VERTICAL ROWS (9:16 portrait cards) ─── */}
+        {verticalRows.map(row => (
+          <ContentRow key={row.genre} title={row.genre}>
+            {row.items.map(v => (
+              <VideoHoverCard
+                key={v.id}
+                id={v.id}
+                title={v.title}
+                thumbnail={v.thumbnail_url}
+                synopsis={v.description}
+                genre_name={row.genre}
+                vertical
+                linkPrefix="/verticals"
+              />
+            ))}
+          </ContentRow>
+        ))}
+
+        {videos.length === 0 && verticals.length === 0 && (
           <div className="text-center py-20">
             <p className="text-muted-foreground font-mono text-sm">No videos available yet.</p>
           </div>
