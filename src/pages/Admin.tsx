@@ -9,9 +9,11 @@ import FinancialsPanel from '@/components/admin/FinancialsPanel';
 import GenresManager from '@/components/admin/GenresManager';
 import UsersTable from '@/components/admin/UsersTable';
 import BulkImport from '@/components/admin/BulkImport';
+import AdsManager from '@/components/admin/AdsManager';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard' },
+  { id: 'ads', label: 'Ads' },
   { id: 'financials', label: 'Financials' },
   { id: 'management', label: 'Management' },
   { id: 'settings', label: 'Settings' },
