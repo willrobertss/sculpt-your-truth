@@ -195,11 +195,20 @@ const Watch = () => {
           {/* Left: Player + Info (75%) */}
           <div className="flex-1 lg:w-3/4">
             {videoUrl ? (
-              <div className="aspect-video bg-black rounded-sm overflow-hidden gold-border">
+              <div className="aspect-video bg-black rounded-sm overflow-hidden gold-border relative">
+                {/* Ad overlay */}
+                {adsReady && adData.length > 0 && (
+                  <AdPlayer
+                    ads={adData}
+                    mainVideoRef={mainVideoRef}
+                    onAllPreRollsDone={() => setPreRollDone(true)}
+                  />
+                )}
                 <video
+                  ref={mainVideoRef}
                   src={videoUrl}
-                  controls
-                  autoPlay
+                  controls={preRollDone}
+                  autoPlay={preRollDone}
                   muted
                   playsInline
                   crossOrigin="anonymous"
