@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import { Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import AdminDialog from './AdminDialog';
 import StatusBadge from './StatusBadge';
+import PosterGenerator from '@/components/PosterGenerator';
 
 interface Video {
   id: string;
