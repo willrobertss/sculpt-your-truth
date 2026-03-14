@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import PosterGenerator from '@/components/PosterGenerator';
 
 type ContentType = 'films' | 'shorts' | 'verticals';
 
