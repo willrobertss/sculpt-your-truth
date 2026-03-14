@@ -272,9 +272,9 @@ const AdsManager = () => {
             </Select>
           </div>
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Placement</label>
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Placement</label>
             <Select value={assignPlacement} onValueChange={setAssignPlacement}>
-              <SelectTrigger className="border-gray-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="border-gray-600 bg-noir-light text-white"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="pre_roll">Pre-Roll (Before Video)</SelectItem>
                 <SelectItem value="mid_roll">Mid-Roll (During Video)</SelectItem>
