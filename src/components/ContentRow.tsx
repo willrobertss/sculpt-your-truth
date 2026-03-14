@@ -44,7 +44,7 @@ const ContentRow = ({ title, children, viewAllLink }: ContentRowProps) => {
       </div>
       <div
         ref={scrollRef}
-        className="flex gap-2 overflow-x-auto hide-scrollbar px-6 pb-4"
+        className="flex gap-2 overflow-x-auto overflow-y-visible hide-scrollbar px-6 pb-12"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         <div className="w-[calc((100vw-1400px)/2)] flex-shrink-0 hidden 2xl:block" />
