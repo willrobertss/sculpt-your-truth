@@ -17,7 +17,7 @@ const ContentRow = ({ title, children, viewAllLink }: ContentRowProps) => {
   };
 
   return (
-    <section className="py-4 group/row">
+    <section className="py-4 group/row relative z-0">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg md:text-xl font-bold text-foreground">{title}</h2>
