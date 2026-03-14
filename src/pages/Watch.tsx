@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SocialSpotlight from '@/components/SocialSpotlight';
+import AdPlayer from '@/components/watch/AdPlayer';
 import { opprimeClient, getVideoUrl, getThumbnailUrl } from '@/lib/opprime-client';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -24,6 +25,12 @@ const Watch = () => {
   const [seriesTitle, setSeriesTitle] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [videoUrl, setVideoUrl] = useState('');
+  const mainVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Ad state
+  const [adData, setAdData] = useState<any[]>([]);
+  const [adsReady, setAdsReady] = useState(false);
+  const [preRollDone, setPreRollDone] = useState(false);
 
   // Social state
   const [userId, setUserId] = useState<string | null>(null);
@@ -65,6 +72,38 @@ const Watch = () => {
           }
         }
         setLoading(false);
+      });
+  }, [id]);
+
+  // Fetch ads for this video
+  useEffect(() => {
+    if (!id) { setAdsReady(true); return; }
+    supabase
+      .from('ad_placements')
+      .select('*, ads(*)')
+      .eq('video_id', id)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const mapped = data
+            .filter((p: any) => p.ads?.is_active)
+            .map((p: any) => ({
+              id: p.id,
+              video_url: p.ads.video_url,
+              title: p.ads.title,
+              duration_seconds: p.ads.duration_seconds,
+              placement: p.placement,
+              trigger_at_seconds: p.trigger_at_seconds,
+            }));
+          setAdData(mapped);
+          if (mapped.some((a: any) => a.placement === 'pre_roll')) {
+            setPreRollDone(false);
+          } else {
+            setPreRollDone(true);
+          }
+        } else {
+          setPreRollDone(true);
+        }
+        setAdsReady(true);
       });
   }, [id]);
 
@@ -156,11 +195,20 @@ const Watch = () => {
           {/* Left: Player + Info (75%) */}
           <div className="flex-1 lg:w-3/4">
             {videoUrl ? (
-              <div className="aspect-video bg-black rounded-sm overflow-hidden gold-border">
+              <div className="aspect-video bg-black rounded-sm overflow-hidden gold-border relative">
+                {/* Ad overlay */}
+                {adsReady && adData.length > 0 && (
+                  <AdPlayer
+                    ads={adData}
+                    mainVideoRef={mainVideoRef}
+                    onAllPreRollsDone={() => setPreRollDone(true)}
+                  />
+                )}
                 <video
+                  ref={mainVideoRef}
                   src={videoUrl}
-                  controls
-                  autoPlay
+                  controls={preRollDone}
+                  autoPlay={preRollDone}
                   muted
                   playsInline
                   crossOrigin="anonymous"

@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_placements: {
+        Row: {
+          ad_id: string
+          created_at: string
+          id: string
+          placement: Database["public"]["Enums"]["ad_placement_type"]
+          trigger_at_seconds: number | null
+          video_id: string
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          id?: string
+          placement?: Database["public"]["Enums"]["ad_placement_type"]
+          trigger_at_seconds?: number | null
+          video_id: string
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          id?: string
+          placement?: Database["public"]["Enums"]["ad_placement_type"]
+          trigger_at_seconds?: number | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_placements_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ads: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       credits: {
         Row: {
           created_at: string
@@ -608,6 +673,7 @@ export type Database = {
       }
     }
     Enums: {
+      ad_placement_type: "pre_roll" | "mid_roll" | "post_roll"
       app_role: "admin" | "creator" | "viewer"
       content_type: "feature" | "short" | "documentary" | "series_episode"
       submission_status:
@@ -744,6 +810,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ad_placement_type: ["pre_roll", "mid_roll", "post_roll"],
       app_role: ["admin", "creator", "viewer"],
       content_type: ["feature", "short", "documentary", "series_episode"],
       submission_status: [
