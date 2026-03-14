@@ -63,6 +63,7 @@ const AdsManager = () => {
   const [assignPlacement, setAssignPlacement] = useState<string>('pre_roll');
   const [assignTrigger, setAssignTrigger] = useState(0);
   const [assigning, setAssigning] = useState(false);
+  const [videoSearch, setVideoSearch] = useState('');
 
   const fetchAll = async () => {
     setLoading(true);
@@ -251,12 +252,22 @@ const AdsManager = () => {
           </div>
           <div>
             <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Select Video</label>
+            <Input
+              placeholder="Search videos..."
+              value={videoSearch}
+              onChange={e => setVideoSearch(e.target.value)}
+              className="border-gray-300 mb-2"
+            />
             <Select value={assignVideoId} onValueChange={setAssignVideoId}>
               <SelectTrigger className="border-gray-300"><SelectValue placeholder="Choose a video" /></SelectTrigger>
               <SelectContent>
-                {opVideos.map(v => (
-                  <SelectItem key={v.id} value={String(v.id)}>{v.title}</SelectItem>
-                ))}
+                {opVideos
+                  .filter(v => !videoSearch || v.title.toLowerCase().includes(videoSearch.toLowerCase()) || String(v.id).includes(videoSearch))
+                  .map(v => (
+                    <SelectItem key={v.id} value={String(v.id)}>
+                      {v.title} <span className="text-gray-400 text-xs ml-1">({String(v.id).slice(0, 8)}…)</span>
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -277,8 +288,17 @@ const AdsManager = () => {
               <Input type="number" value={assignTrigger} onChange={e => setAssignTrigger(Number(e.target.value))} min={0} className="border-gray-300" />
             </div>
           )}
+          {assignAdId && assignVideoId && (
+            <div className="bg-gray-50 border border-gray-200 rounded p-3 text-sm space-y-1">
+              <p className="font-heading text-xs uppercase tracking-wider text-gray-500">Preview</p>
+              <p><strong>Ad:</strong> {ads.find(a => a.id === assignAdId)?.title}</p>
+              <p><strong>Video:</strong> {videoTitle(assignVideoId)}</p>
+              <p><strong>Placement:</strong> {PLACEMENT_LABELS[assignPlacement]}</p>
+              <p className="text-gray-400 text-xs">Video ID: {assignVideoId}</p>
+            </div>
+          )}
           <Button onClick={handleAssign} disabled={assigning} className="w-full bg-black text-white hover:bg-gray-800 font-heading text-xs uppercase tracking-widest">
-            {assigning ? 'Assigning...' : 'Assign Ad'}
+            {assigning ? 'Saving...' : 'Save Placement'}
           </Button>
         </div>
       </AdminDialog>

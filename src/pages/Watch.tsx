@@ -78,11 +78,14 @@ const Watch = () => {
   // Fetch ads for this video
   useEffect(() => {
     if (!id) { setAdsReady(true); return; }
+    console.log('[Watch] Fetching ad placements for video_id:', id);
     supabase
       .from('ad_placements')
       .select('*, ads(*)')
       .eq('video_id', id)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('[Watch] Ad placements fetch error:', error);
+        console.log('[Watch] Ad placements result:', data);
         if (data && data.length > 0) {
           const mapped = data
             .filter((p: any) => p.ads?.is_active)
