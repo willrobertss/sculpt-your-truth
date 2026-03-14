@@ -83,7 +83,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center film-grain">
+    <div className="min-h-screen bg-background flex items-center justify-center film-grain pt-16">
+      <Navbar />
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
