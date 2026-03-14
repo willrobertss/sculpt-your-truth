@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import ReferralLanding from "./pages/ReferralLanding";
 import Verticals from "./pages/Verticals";
 import ResetPassword from "./pages/ResetPassword";
+import Watch from "./pages/Watch";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
