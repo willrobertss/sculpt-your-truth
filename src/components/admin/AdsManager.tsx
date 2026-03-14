@@ -63,6 +63,7 @@ const AdsManager = () => {
   const [assignPlacement, setAssignPlacement] = useState<string>('pre_roll');
   const [assignTrigger, setAssignTrigger] = useState(0);
   const [assigning, setAssigning] = useState(false);
+  const [videoSearch, setVideoSearch] = useState('');
 
   const fetchAll = async () => {
     setLoading(true);
