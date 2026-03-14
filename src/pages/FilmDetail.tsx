@@ -6,7 +6,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FilmCard from '@/components/FilmCard';
 import GoldButton from '@/components/GoldButton';
+import SocialSpotlight from '@/components/SocialSpotlight';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const FilmDetail = () => {
   const { id } = useParams();
