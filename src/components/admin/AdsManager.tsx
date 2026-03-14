@@ -284,8 +284,8 @@ const AdsManager = () => {
           </div>
           {assignPlacement === 'mid_roll' && (
             <div>
-              <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Trigger at (seconds into video)</label>
-              <Input type="number" value={assignTrigger} onChange={e => setAssignTrigger(Number(e.target.value))} min={0} className="border-gray-300" />
+              <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Trigger at (seconds into video)</label>
+              <Input type="number" value={assignTrigger} onChange={e => setAssignTrigger(Number(e.target.value))} min={0} className="border-gray-600 bg-noir-light text-white" />
             </div>
           )}
           {assignAdId && assignVideoId && (
