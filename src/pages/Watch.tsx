@@ -25,6 +25,12 @@ const Watch = () => {
   const [seriesTitle, setSeriesTitle] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [videoUrl, setVideoUrl] = useState('');
+  const mainVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Ad state
+  const [adData, setAdData] = useState<any[]>([]);
+  const [adsReady, setAdsReady] = useState(false);
+  const [preRollDone, setPreRollDone] = useState(false);
 
   // Social state
   const [userId, setUserId] = useState<string | null>(null);
