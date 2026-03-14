@@ -6,7 +6,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FilmCard from '@/components/FilmCard';
 import GoldButton from '@/components/GoldButton';
+import SocialSpotlight from '@/components/SocialSpotlight';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const FilmDetail = () => {
   const { id } = useParams();
@@ -16,6 +18,19 @@ const FilmDetail = () => {
   const [creatorSlug, setCreatorSlug] = useState('');
   const [loading, setLoading] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
+
+  // Social state
+  const [userId, setUserId] = useState<string | null>(null);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState<any[]>([]);
+
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -34,6 +49,41 @@ const FilmDetail = () => {
     };
     load();
   }, [id]);
+
+  // Fetch likes & comments for this film
+  useEffect(() => {
+    if (!id) return;
+    supabase.from('video_likes').select('id', { count: 'exact' }).eq('video_id', id).then(({ count }) => {
+      setLikeCount(count || 0);
+    });
+    if (userId) {
+      supabase.from('video_likes').select('id').eq('video_id', id).eq('user_id', userId).then(({ data }) => {
+        setLiked(!!(data && data.length > 0));
+      });
+    }
+    supabase.from('video_comments').select('*').eq('video_id', id).order('created_at', { ascending: true }).then(({ data }) => {
+      setComments(data || []);
+    });
+  }, [id, userId]);
+
+  const handleLike = async () => {
+    if (!userId) { toast.error('Sign in to like'); return; }
+    if (!id) return;
+    if (liked) {
+      await supabase.from('video_likes').delete().eq('video_id', id).eq('user_id', userId);
+      setLiked(false);
+      setLikeCount(c => Math.max(0, c - 1));
+    } else {
+      await supabase.from('video_likes').insert({ video_id: id, user_id: userId });
+      setLiked(true);
+      setLikeCount(c => c + 1);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    await supabase.from('video_comments').delete().eq('id', commentId);
+    setComments(prev => prev.filter(c => c.id !== commentId));
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -107,19 +157,37 @@ const FilmDetail = () => {
 
       <section className="py-12">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div className="md:col-span-2">
-              <h2 className="font-display text-xl font-bold text-foreground mb-4">Synopsis</h2>
-              <p className="font-body text-muted-foreground leading-relaxed">{film.synopsis || film.tagline || 'No synopsis available.'}</p>
-            </div>
-            <div>
-              <h2 className="font-display text-xl font-bold text-foreground mb-4">Credits</h2>
-              <div className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+            <div className="lg:col-span-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div className="md:col-span-2">
+                  <h2 className="font-display text-xl font-bold text-foreground mb-4">Synopsis</h2>
+                  <p className="font-body text-muted-foreground leading-relaxed">{film.synopsis || film.tagline || 'No synopsis available.'}</p>
+                </div>
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">Creator</span>
-                  <Link to={`/creators/${creatorSlug}`} className="block text-sm text-foreground hover:text-primary transition-colors">{creatorName}</Link>
+                  <h2 className="font-display text-xl font-bold text-foreground mb-4">Credits</h2>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-primary">Creator</span>
+                      <Link to={`/creators/${creatorSlug}`} className="block text-sm text-foreground hover:text-primary transition-colors">{creatorName}</Link>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+            <div className="lg:col-span-1">
+              <SocialSpotlight
+                videoId={id!}
+                userId={userId}
+                liked={liked}
+                likeCount={likeCount}
+                comments={comments}
+                shareUrl={window.location.href}
+                videoTitle={film.title}
+                onLikeToggle={handleLike}
+                onCommentAdd={(comment) => setComments(prev => [...prev, comment])}
+                onCommentDelete={(commentId) => handleDeleteComment(commentId)}
+              />
             </div>
           </div>
         </div>
