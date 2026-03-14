@@ -219,12 +219,12 @@ const AdsManager = () => {
       <AdminDialog open={uploadOpen} onOpenChange={setUploadOpen} title="Upload New Ad" description="Upload a video commercial to the ad library">
         <div className="space-y-4 mt-4">
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Ad Title</label>
-            <Input value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} placeholder="e.g. Spring Sale 2026" className="border-gray-300" />
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Ad Title</label>
+            <Input value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} placeholder="e.g. Spring Sale 2026" className="border-gray-600 bg-noir-light text-white placeholder:text-gray-500" />
           </div>
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Duration (seconds)</label>
-            <Input type="number" value={uploadDuration} onChange={e => setUploadDuration(Number(e.target.value))} min={5} max={120} className="border-gray-300" />
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Duration (seconds)</label>
+            <Input type="number" value={uploadDuration} onChange={e => setUploadDuration(Number(e.target.value))} min={5} max={120} className="border-gray-600 bg-noir-light text-white" />
           </div>
           <div>
             <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Video File</label>
