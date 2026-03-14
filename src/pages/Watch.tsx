@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SocialSpotlight from '@/components/SocialSpotlight';
+import AdPlayer from '@/components/watch/AdPlayer';
 import { opprimeClient, getVideoUrl, getThumbnailUrl } from '@/lib/opprime-client';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
