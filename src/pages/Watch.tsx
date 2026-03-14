@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share2, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SocialSpotlight from '@/components/SocialSpotlight';
 import { opprimeClient, getVideoUrl, getThumbnailUrl } from '@/lib/opprime-client';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
 interface Video {
