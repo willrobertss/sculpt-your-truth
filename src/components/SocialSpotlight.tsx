@@ -14,6 +14,7 @@ interface SocialSpotlightProps {
   likeCount: number;
   comments: any[];
   shareUrl: string;
+  videoTitle: string;
   onLikeToggle: () => void;
   onCommentAdd: (comment: any) => void;
   onCommentDelete: (commentId: string) => void;
