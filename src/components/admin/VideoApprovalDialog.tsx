@@ -129,6 +129,32 @@ const VideoApprovalDialog = ({ video, open, onOpenChange, onAction }: VideoAppro
           </div>
         </div>
 
+        {/* AI Poster Generator */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <p className="font-heading text-sm text-gray-600 uppercase mb-2">AI Poster Generator</p>
+          <PosterGenerator
+            videoId={video.id}
+            videoTitle={video.title}
+            synopsis={video.synopsis}
+            currentThumbnail={thumbSrc}
+            onGenerated={() => onAction()}
+            table="videos"
+          />
+        </div>
+
+        {/* Featured toggle */}
+        <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-3">
+          <Switch
+            checked={(video as any).featured || false}
+            onCheckedChange={async (checked) => {
+              await supabase.from('videos').update({ featured: checked } as any).eq('id', video.id);
+              toast.success(checked ? 'Marked as featured' : 'Removed from featured');
+              onAction();
+            }}
+          />
+          <span className="font-heading text-sm text-gray-600 uppercase">Featured on Homepage</span>
+        </div>
+
         {/* Bottom action buttons */}
         <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-gray-200">
           {!video.approved && !video.thumb_approved && !video.reviewed && (
