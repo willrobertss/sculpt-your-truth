@@ -29,7 +29,6 @@ interface OPVideo {
   thumbnail: string | null;
   genre_id: string | null;
   serie_id: string | null;
-  approved: boolean;
 }
 
 interface OPGenre {
