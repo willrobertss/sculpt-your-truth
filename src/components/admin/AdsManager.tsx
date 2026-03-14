@@ -240,9 +240,9 @@ const AdsManager = () => {
       <AdminDialog open={assignOpen} onOpenChange={setAssignOpen} title="Assign Ad to Video" description="Choose where and when the ad plays">
         <div className="space-y-4 mt-4">
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Select Ad</label>
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Select Ad</label>
             <Select value={assignAdId} onValueChange={setAssignAdId}>
-              <SelectTrigger className="border-gray-300"><SelectValue placeholder="Choose an ad" /></SelectTrigger>
+              <SelectTrigger className="border-gray-600 bg-noir-light text-white"><SelectValue placeholder="Choose an ad" /></SelectTrigger>
               <SelectContent>
                 {ads.filter(a => a.is_active).map(a => (
                   <SelectItem key={a.id} value={a.id}>{a.title} ({a.duration_seconds}s)</SelectItem>
