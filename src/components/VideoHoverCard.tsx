@@ -38,7 +38,7 @@ const VideoHoverCard = ({ id, title, thumbnail, poster_url, synopsis, genre_name
 
   return (
     <div
-      className={`relative flex-shrink-0 ${cardWidth}`}
+      className={`relative flex-shrink-0 ${cardWidth} ${hovered ? 'z-50' : 'z-0'}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{ scrollSnapAlign: 'start' }}
