@@ -1,1 +1,4 @@
 project_id = "dcpxigcttjryzzvtovse"
+
+[functions.generate-poster]
+verify_jwt = false
