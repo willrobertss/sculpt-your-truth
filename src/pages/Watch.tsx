@@ -112,32 +112,15 @@ const Watch = () => {
     }
   };
 
-  const handleComment = async () => {
-    if (!userId) { toast.error('Sign in to comment'); return; }
-    if (!id || !newComment.trim()) return;
-    setSubmittingComment(true);
-    const { data, error } = await supabase.from('video_comments').insert({
-      video_id: id,
-      user_id: userId,
-      content: newComment.trim(),
-    }).select().single();
-    setSubmittingComment(false);
-    if (error) { toast.error('Failed to post comment'); return; }
-    setComments(prev => [...prev, data]);
-    setNewComment('');
-  };
-
   const handleDeleteComment = async (commentId: string) => {
     await supabase.from('video_comments').delete().eq('id', commentId);
     setComments(prev => prev.filter(c => c.id !== commentId));
   };
 
-  const handleShare = () => {
+  const shareUrl = (() => {
     const trailerUrl = (video as any)?.trailer_url;
-    const shareUrl = trailerUrl || window.location.href;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Link copied to clipboard!');
-  };
+    return trailerUrl || window.location.href;
+  })();
 
   if (loading) {
     return (
