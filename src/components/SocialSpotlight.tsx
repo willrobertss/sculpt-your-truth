@@ -73,8 +73,7 @@ const SocialSpotlight = ({
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Link copied to clipboard!');
+    setShareOpen(true);
   };
 
   const getInitials = (userId: string) => {
