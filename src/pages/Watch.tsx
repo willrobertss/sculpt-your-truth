@@ -161,6 +161,8 @@ const Watch = () => {
                   src={videoUrl}
                   controls
                   autoPlay
+                  muted
+                  playsInline
                   crossOrigin="anonymous"
                   preload="metadata"
                   className="w-full h-full"
