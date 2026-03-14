@@ -133,6 +133,20 @@ const Index = () => {
     return [...videos].sort((a, b) => (b as any).created_at > (a as any).created_at ? 1 : -1).slice(0, 20);
   }, [videos]);
 
+  // Verticals grouped by genre
+  const verticalRows = useMemo(() => {
+    const rows: { genre: string; items: Vertical[] }[] = [];
+    VERTICAL_GENRES.forEach(genre => {
+      const items = verticals.filter(v => v.genre?.some(g => g.toLowerCase() === genre.toLowerCase()));
+      if (items.length > 0) rows.push({ genre: `Vertical ${genre}`, items });
+    });
+    // Catch-all for verticals not in Drama/Comedy
+    const categorized = new Set(rows.flatMap(r => r.items.map(i => i.id)));
+    const uncategorized = verticals.filter(v => !categorized.has(v.id));
+    if (uncategorized.length > 0) rows.push({ genre: 'Verticals', items: uncategorized });
+    return rows;
+  }, [verticals]);
+
   const marqueeText = '★ NEW RELEASES EVERY WEEK ★ INDEPENDENT CINEMA ★ CREATOR-FIRST PLATFORM ★ SHORTS & FEATURES ★ GLOBAL STORYTELLERS ★ ';
 
   const steps = [
