@@ -54,7 +54,7 @@ const Index = () => {
     // Fetch testimonials from Lovable Cloud + video content from external OPPRIME project
     Promise.all([
       supabase.from('testimonials').select('id, name, role, quote, avatar_url, rating').eq('is_active', true).order('display_order'),
-      opprimeClient.from('videos').select('*').eq('approved', true),
+      opprimeClient.from('videos').select('*'),
       opprimeClient.from('genres').select('*'),
       opprimeClient.from('series').select('*'),
     ]).then(([t, v, g, s]) => {
