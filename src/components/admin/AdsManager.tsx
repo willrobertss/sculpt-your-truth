@@ -219,16 +219,16 @@ const AdsManager = () => {
       <AdminDialog open={uploadOpen} onOpenChange={setUploadOpen} title="Upload New Ad" description="Upload a video commercial to the ad library">
         <div className="space-y-4 mt-4">
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Ad Title</label>
-            <Input value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} placeholder="e.g. Spring Sale 2026" className="border-gray-300" />
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Ad Title</label>
+            <Input value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} placeholder="e.g. Spring Sale 2026" className="border-gray-600 bg-noir-light text-white placeholder:text-gray-500" />
           </div>
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Duration (seconds)</label>
-            <Input type="number" value={uploadDuration} onChange={e => setUploadDuration(Number(e.target.value))} min={5} max={120} className="border-gray-300" />
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Duration (seconds)</label>
+            <Input type="number" value={uploadDuration} onChange={e => setUploadDuration(Number(e.target.value))} min={5} max={120} className="border-gray-600 bg-noir-light text-white" />
           </div>
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Video File</label>
-            <input ref={fileRef} type="file" accept="video/*" onChange={e => setUploadFile(e.target.files?.[0] || null)} className="font-sans text-sm" />
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Video File</label>
+            <input ref={fileRef} type="file" accept="video/*" onChange={e => setUploadFile(e.target.files?.[0] || null)} className="font-sans text-sm text-white" />
           </div>
           <Button onClick={handleUpload} disabled={uploading} className="w-full bg-black text-white hover:bg-gray-800 font-heading text-xs uppercase tracking-widest">
             {uploading ? 'Uploading...' : 'Upload Ad'}
@@ -240,9 +240,9 @@ const AdsManager = () => {
       <AdminDialog open={assignOpen} onOpenChange={setAssignOpen} title="Assign Ad to Video" description="Choose where and when the ad plays">
         <div className="space-y-4 mt-4">
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Select Ad</label>
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Select Ad</label>
             <Select value={assignAdId} onValueChange={setAssignAdId}>
-              <SelectTrigger className="border-gray-300"><SelectValue placeholder="Choose an ad" /></SelectTrigger>
+              <SelectTrigger className="border-gray-600 bg-noir-light text-white"><SelectValue placeholder="Choose an ad" /></SelectTrigger>
               <SelectContent>
                 {ads.filter(a => a.is_active).map(a => (
                   <SelectItem key={a.id} value={a.id}>{a.title} ({a.duration_seconds}s)</SelectItem>
@@ -251,15 +251,15 @@ const AdsManager = () => {
             </Select>
           </div>
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Select Video</label>
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Select Video</label>
             <Input
               placeholder="Search videos..."
               value={videoSearch}
               onChange={e => setVideoSearch(e.target.value)}
-              className="border-gray-300 mb-2"
+              className="border-gray-600 bg-noir-light text-white placeholder:text-gray-500 mb-2"
             />
             <Select value={assignVideoId} onValueChange={setAssignVideoId}>
-              <SelectTrigger className="border-gray-300"><SelectValue placeholder="Choose a video" /></SelectTrigger>
+              <SelectTrigger className="border-gray-600 bg-noir-light text-white"><SelectValue placeholder="Choose a video" /></SelectTrigger>
               <SelectContent>
                 {opVideos
                   .filter(v => !videoSearch || v.title.toLowerCase().includes(videoSearch.toLowerCase()) || String(v.id).includes(videoSearch))
@@ -272,9 +272,9 @@ const AdsManager = () => {
             </Select>
           </div>
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Placement</label>
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Placement</label>
             <Select value={assignPlacement} onValueChange={setAssignPlacement}>
-              <SelectTrigger className="border-gray-300"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="border-gray-600 bg-noir-light text-white"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="pre_roll">Pre-Roll (Before Video)</SelectItem>
                 <SelectItem value="mid_roll">Mid-Roll (During Video)</SelectItem>
@@ -284,13 +284,13 @@ const AdsManager = () => {
           </div>
           {assignPlacement === 'mid_roll' && (
             <div>
-              <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Trigger at (seconds into video)</label>
-              <Input type="number" value={assignTrigger} onChange={e => setAssignTrigger(Number(e.target.value))} min={0} className="border-gray-300" />
+              <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Trigger at (seconds into video)</label>
+              <Input type="number" value={assignTrigger} onChange={e => setAssignTrigger(Number(e.target.value))} min={0} className="border-gray-600 bg-noir-light text-white" />
             </div>
           )}
           {assignAdId && assignVideoId && (
-            <div className="bg-gray-50 border border-gray-200 rounded p-3 text-sm space-y-1">
-              <p className="font-heading text-xs uppercase tracking-wider text-gray-500">Preview</p>
+             <div className="bg-noir-light border border-gray-600 rounded p-3 text-sm space-y-1">
+              <p className="font-heading text-xs uppercase tracking-wider text-gray-400">Preview</p>
               <p><strong>Ad:</strong> {ads.find(a => a.id === assignAdId)?.title}</p>
               <p><strong>Video:</strong> {videoTitle(assignVideoId)}</p>
               <p><strong>Placement:</strong> {PLACEMENT_LABELS[assignPlacement]}</p>
