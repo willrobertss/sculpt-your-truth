@@ -289,8 +289,8 @@ const AdsManager = () => {
             </div>
           )}
           {assignAdId && assignVideoId && (
-            <div className="bg-gray-50 border border-gray-200 rounded p-3 text-sm space-y-1">
-              <p className="font-heading text-xs uppercase tracking-wider text-gray-500">Preview</p>
+             <div className="bg-noir-light border border-gray-600 rounded p-3 text-sm space-y-1">
+              <p className="font-heading text-xs uppercase tracking-wider text-gray-400">Preview</p>
               <p><strong>Ad:</strong> {ads.find(a => a.id === assignAdId)?.title}</p>
               <p><strong>Video:</strong> {videoTitle(assignVideoId)}</p>
               <p><strong>Placement:</strong> {PLACEMENT_LABELS[assignPlacement]}</p>
