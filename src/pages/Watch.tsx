@@ -210,78 +210,18 @@ const Watch = () => {
             )}
           </div>
 
-          {/* Right: Social Sidebar (25%) */}
-          <div className="lg:w-1/4 lg:min-w-[280px] flex flex-col border border-border rounded-sm bg-card/50">
-            {/* Like + Share bar */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <button
-                onClick={handleLike}
-                className={`flex items-center gap-2 transition-colors ${liked ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
-                <span className="font-mono text-xs">{likeCount}</span>
-              </button>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MessageCircle size={16} />
-                <span className="font-mono text-xs">{comments.length}</span>
-              </div>
-              <button onClick={handleShare} className="text-muted-foreground hover:text-foreground transition-colors">
-                <Share2 size={18} />
-              </button>
-            </div>
-
-            {/* Comments */}
-            <div className="flex-1 flex flex-col min-h-0">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground px-4 pt-3 pb-2">Comments</p>
-              <ScrollArea className="flex-1 max-h-[400px] lg:max-h-[50vh]">
-                <div className="px-4 space-y-3 pb-3">
-                  {comments.length === 0 && (
-                    <p className="text-muted-foreground text-xs font-mono py-4 text-center">No comments yet. Be the first!</p>
-                  )}
-                  {comments.map((c) => (
-                    <div key={c.id} className="group">
-                      <div className="flex justify-between items-start gap-2">
-                        <p className="text-foreground text-sm leading-relaxed break-words flex-1">{c.content}</p>
-                        {c.user_id === userId && (
-                          <button
-                            onClick={() => handleDeleteComment(c.id)}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        )}
-                      </div>
-                      <p className="font-mono text-[10px] text-muted-foreground mt-1">
-                        {new Date(c.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-
-              {/* Comment input */}
-              <div className="p-3 border-t border-border">
-                <div className="flex gap-2">
-                  <Input
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder={userId ? "Add a comment..." : "Sign in to comment"}
-                    disabled={!userId || submittingComment}
-                    onKeyDown={(e) => e.key === 'Enter' && handleComment()}
-                    className="text-sm"
-                  />
-                  <Button
-                    onClick={handleComment}
-                    disabled={!userId || !newComment.trim() || submittingComment}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <Send size={16} />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Right: Social Spotlight */}
+          <SocialSpotlight
+            videoId={id!}
+            userId={userId}
+            liked={liked}
+            likeCount={likeCount}
+            comments={comments}
+            shareUrl={shareUrl}
+            onLikeToggle={handleLike}
+            onCommentAdd={(comment) => setComments(prev => [...prev, comment])}
+            onCommentDelete={(commentId) => handleDeleteComment(commentId)}
+          />
         </div>
       </div>
 
