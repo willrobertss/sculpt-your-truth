@@ -493,7 +493,10 @@ export type Database = {
           belowAge: boolean
           created_at: string
           creator_id: string
+          featured: boolean | null
           id: string
+          poster_url: string | null
+          preview_clip_url: string | null
           reviewed: boolean
           serie_id: string | null
           synopsis: string | null
@@ -507,7 +510,10 @@ export type Database = {
           belowAge?: boolean
           created_at?: string
           creator_id: string
+          featured?: boolean | null
           id?: string
+          poster_url?: string | null
+          preview_clip_url?: string | null
           reviewed?: boolean
           serie_id?: string | null
           synopsis?: string | null
@@ -521,7 +527,10 @@ export type Database = {
           belowAge?: boolean
           created_at?: string
           creator_id?: string
+          featured?: boolean | null
           id?: string
+          poster_url?: string | null
+          preview_clip_url?: string | null
           reviewed?: boolean
           serie_id?: string | null
           synopsis?: string | null
