@@ -252,7 +252,25 @@ const Index = () => {
           </ContentRow>
         ))}
 
-        {videos.length === 0 && (
+        {/* ─── VERTICAL ROWS (9:16 portrait cards) ─── */}
+        {verticalRows.map(row => (
+          <ContentRow key={row.genre} title={row.genre}>
+            {row.items.map(v => (
+              <VideoHoverCard
+                key={v.id}
+                id={v.id}
+                title={v.title}
+                thumbnail={v.thumbnail_url}
+                synopsis={v.description}
+                genre_name={row.genre}
+                vertical
+                linkPrefix="/verticals"
+              />
+            ))}
+          </ContentRow>
+        ))}
+
+        {videos.length === 0 && verticals.length === 0 && (
           <div className="text-center py-20">
             <p className="text-muted-foreground font-mono text-sm">No videos available yet.</p>
           </div>
