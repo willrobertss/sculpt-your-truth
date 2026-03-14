@@ -1,18 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Film, Tv, Upload, Star, Users } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import GoldButton from '@/components/GoldButton';
 import TestimonialCard from '@/components/TestimonialCard';
+import ContentRow from '@/components/ContentRow';
+import VideoHoverCard from '@/components/VideoHoverCard';
+import HeroBillboard from '@/components/HeroBillboard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { faqItems } from '@/lib/mock-data';
 import { supabase } from '@/integrations/supabase/client';
-import { opprimeClient, getThumbnailUrl } from '@/lib/opprime-client';
+import { opprimeClient } from '@/lib/opprime-client';
 import heroImage from '@/assets/hero-filmset.jpg';
-import logo from '@/assets/logo.png';
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -27,8 +29,12 @@ interface OPVideo {
   id: string;
   title: string;
   thumbnail: string | null;
+  synopsis: string | null;
   genre_id: string | null;
   serie_id: string | null;
+  poster_url?: string | null;
+  preview_clip_url?: string | null;
+  featured?: boolean;
 }
 
 interface OPGenre {
@@ -47,11 +53,9 @@ const Index = () => {
   const [videos, setVideos] = useState<OPVideo[]>([]);
   const [genres, setGenres] = useState<OPGenre[]>([]);
   const [series, setSeries] = useState<OPSeries[]>([]);
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch testimonials from Lovable Cloud + video content from external OPPRIME project
     Promise.all([
       supabase.from('testimonials').select('id, name, role, quote, avatar_url, rating').eq('is_active', true).order('display_order'),
       opprimeClient.from('videos').select('*'),
@@ -65,29 +69,55 @@ const Index = () => {
     });
   }, []);
 
-  const filteredVideos = useMemo(() => {
-    if (!selectedGenre) return videos;
-    return videos.filter(v => v.genre_id === selectedGenre);
-  }, [videos, selectedGenre]);
+  // Featured video for hero billboard
+  const featuredVideo = useMemo(() => {
+    return videos.find(v => v.featured) || (videos.length > 0 ? videos[0] : null);
+  }, [videos]);
 
-  // Group videos: standalone vs series
-  const { standaloneVideos, seriesGroups } = useMemo(() => {
-    const standalone: OPVideo[] = [];
+  // Genre lookup
+  const genreMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    genres.forEach(g => { map[g.id] = g.name; });
+    return map;
+  }, [genres]);
+
+  // Group videos by genre for rows
+  const genreRows = useMemo(() => {
     const grouped: Record<string, OPVideo[]> = {};
+    videos.forEach(v => {
+      const gid = v.genre_id || '_uncategorized';
+      if (!grouped[gid]) grouped[gid] = [];
+      grouped[gid].push(v);
+    });
+    return Object.entries(grouped)
+      .filter(([, vids]) => vids.length > 0)
+      .map(([gid, vids]) => ({
+        id: gid,
+        title: gid === '_uncategorized' ? 'More to Explore' : (genreMap[gid] || 'Collection'),
+        videos: vids,
+      }));
+  }, [videos, genreMap]);
 
-    filteredVideos.forEach(v => {
+  // Series rows
+  const seriesRows = useMemo(() => {
+    const grouped: Record<string, OPVideo[]> = {};
+    videos.forEach(v => {
       if (v.serie_id) {
         if (!grouped[v.serie_id]) grouped[v.serie_id] = [];
         grouped[v.serie_id].push(v);
-      } else {
-        standalone.push(v);
       }
     });
+    return Object.entries(grouped).map(([sid, vids]) => ({
+      id: sid,
+      title: series.find(s => s.id === sid)?.title || 'Series',
+      videos: vids,
+    }));
+  }, [videos, series]);
 
-    return { standaloneVideos: standalone, seriesGroups: grouped };
-  }, [filteredVideos]);
-
-  const getSeriesTitle = (id: string) => series.find(s => s.id === id)?.title || 'Series';
+  // Recently added
+  const recentVideos = useMemo(() => {
+    return [...videos].sort((a, b) => (b as any).created_at > (a as any).created_at ? 1 : -1).slice(0, 20);
+  }, [videos]);
 
   const marqueeText = '★ NEW RELEASES EVERY WEEK ★ INDEPENDENT CINEMA ★ CREATOR-FIRST PLATFORM ★ SHORTS & FEATURES ★ GLOBAL STORYTELLERS ★ ';
 
@@ -110,38 +140,96 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* ─── HERO ─── */}
-      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden film-grain vignette">
-        <div className="absolute inset-0">
-          <img src={heroImage} alt="" className="w-full h-full object-cover opacity-50" />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/75 to-background" />
-        <div className="relative z-10 container mx-auto px-6 text-center">
-          <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-3xl mx-auto">
-            <motion.div variants={fadeUp} className="flex justify-center mb-2">
-              <img src={logo} alt="OPPRIME.tv" className="w-full max-w-lg" />
+      {/* ─── HERO BILLBOARD ─── */}
+      <HeroBillboard video={featuredVideo} fallbackImage={heroImage} />
+
+      {/* ─── CTA OVERLAY (when no featured video) ─── */}
+      {!featuredVideo && (
+        <section className="relative -mt-32 z-10 pb-8">
+          <div className="container mx-auto px-6 text-center">
+            <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-2xl mx-auto">
+              <motion.h1 variants={fadeUp} className="font-display text-2xl md:text-4xl font-bold text-foreground leading-[1.1] mb-4">
+                Where Storytellers <span className="text-gold-gradient">Find Their Stage</span>
+              </motion.h1>
+              <motion.p variants={fadeUp} className="font-body text-base text-muted-foreground max-w-xl mx-auto mb-5">
+                Stream boundary-pushing features, shorts, and vertical content from the world's most daring independent filmmakers.
+              </motion.p>
+              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-surface border-border text-foreground placeholder:text-muted-foreground h-12"
+                />
+                <GoldButton size="md" onClick={() => navigate('/login')} className="h-12 whitespace-nowrap">
+                  Get Started <ArrowRight size={14} className="ml-2" />
+                </GoldButton>
+              </motion.div>
             </motion.div>
-            <motion.h1 variants={fadeUp} className="font-display text-2xl md:text-4xl lg:text-5xl font-bold text-foreground leading-[1.1] mb-4 whitespace-nowrap">
-              Where Storytellers <span className="text-gold-gradient">Find Their Stage</span>
-            </motion.h1>
-            <motion.p variants={fadeUp} className="font-body text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-5">
-              Stream boundary-pushing features, shorts, and vertical content from the world's most daring independent filmmakers.
-            </motion.p>
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-surface border-border text-foreground placeholder:text-muted-foreground h-12"
+          </div>
+        </section>
+      )}
+
+      {/* ─── CONTENT ROWS ─── */}
+      <div className="relative z-10 -mt-10 space-y-2">
+        {/* Recently Added */}
+        {recentVideos.length > 0 && (
+          <ContentRow title="Recently Added">
+            {recentVideos.map(v => (
+              <VideoHoverCard
+                key={v.id}
+                id={v.id}
+                title={v.title}
+                thumbnail={v.thumbnail}
+                poster_url={v.poster_url}
+                synopsis={v.synopsis}
+                genre_name={v.genre_id ? genreMap[v.genre_id] : undefined}
               />
-              <GoldButton size="md" onClick={() => navigate('/login')} className="h-12 whitespace-nowrap">
-                Get Started <ArrowRight size={14} className="ml-2" />
-              </GoldButton>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+            ))}
+          </ContentRow>
+        )}
+
+        {/* Series rows */}
+        {seriesRows.map(row => (
+          <ContentRow key={row.id} title={`Series: ${row.title}`}>
+            {row.videos.map(v => (
+              <VideoHoverCard
+                key={v.id}
+                id={v.id}
+                title={v.title}
+                thumbnail={v.thumbnail}
+                poster_url={v.poster_url}
+                synopsis={v.synopsis}
+                genre_name={v.genre_id ? genreMap[v.genre_id] : undefined}
+              />
+            ))}
+          </ContentRow>
+        ))}
+
+        {/* Genre rows */}
+        {genreRows.map(row => (
+          <ContentRow key={row.id} title={row.title}>
+            {row.videos.map(v => (
+              <VideoHoverCard
+                key={v.id}
+                id={v.id}
+                title={v.title}
+                thumbnail={v.thumbnail}
+                poster_url={v.poster_url}
+                synopsis={v.synopsis}
+                genre_name={row.title}
+              />
+            ))}
+          </ContentRow>
+        ))}
+
+        {videos.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground font-mono text-sm">No videos available yet.</p>
+          </div>
+        )}
+      </div>
 
       {/* ─── TESTIMONIALS ─── */}
       {testimonials.length > 0 && (
@@ -162,74 +250,6 @@ const Index = () => {
         <div className="flex animate-marquee whitespace-nowrap">
           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">{marqueeText}{marqueeText}</span>
         </div>
-      </div>
-
-      {/* ─── GENRE FILTER BAR ─── */}
-      {genres.length > 0 && (
-        <div className="container mx-auto px-6 pt-8">
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedGenre(null)}
-              className={`px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-widest transition-colors ${
-                !selectedGenre
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-muted-foreground hover:text-foreground border border-border'
-              }`}
-            >
-              All
-            </button>
-            {genres.map(g => (
-              <button
-                key={g.id}
-                onClick={() => setSelectedGenre(g.id)}
-                className={`px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-widest transition-colors ${
-                  selectedGenre === g.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card text-muted-foreground hover:text-foreground border border-border'
-                }`}
-              >
-                {g.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ─── VIDEO GRID ─── */}
-      <div className="container mx-auto px-6 py-8">
-        {/* Series groups */}
-        {Object.entries(seriesGroups).map(([serieId, episodes]) => (
-          <div key={serieId} className="mb-10">
-            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4">
-              <span className="text-primary">Series:</span> {getSeriesTitle(serieId)}
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {episodes.map(v => (
-                <VideoCard key={v.id} video={v} />
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {/* Standalone videos */}
-        {standaloneVideos.length > 0 && (
-          <div>
-            {Object.keys(seriesGroups).length > 0 && (
-              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-4">Standalone Films</h2>
-            )}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {standaloneVideos.map(v => (
-                <VideoCard key={v.id} video={v} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {filteredVideos.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-muted-foreground font-mono text-sm">No videos found{selectedGenre ? ' for this genre' : ''}.</p>
-          </div>
-        )}
       </div>
 
       {/* ─── CREATOR ONBOARDING STEPS ─── */}
@@ -314,27 +334,5 @@ const Index = () => {
     </div>
   );
 };
-
-/* ─── Video Thumbnail Card ─── */
-const VideoCard = ({ video }: { video: OPVideo }) => (
-  <Link to={`/watch/${video.id}`} className="group block">
-    <motion.div
-      whileHover={{ scale: 1.03, y: -4 }}
-      transition={{ duration: 0.3 }}
-      className="relative overflow-hidden rounded-sm aspect-video gold-border"
-    >
-      <img
-        src={getThumbnailUrl(video.thumbnail)}
-        alt={video.title}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        loading="lazy"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    </motion.div>
-    <h3 className="font-display text-sm font-semibold text-foreground mt-2 truncate group-hover:text-primary transition-colors">
-      {video.title}
-    </h3>
-  </Link>
-);
 
 export default Index;

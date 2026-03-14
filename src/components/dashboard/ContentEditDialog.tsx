@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import PosterGenerator from '@/components/PosterGenerator';
 
 type ContentType = 'films' | 'shorts' | 'verticals';
 
@@ -242,6 +243,19 @@ const ContentEditDialog = ({ open, onClose, item, contentType, userId, onSaved }
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* AI Poster Generator */}
+          <div>
+            <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block mb-2">AI Poster</label>
+            <PosterGenerator
+              videoId={item.id}
+              videoTitle={title}
+              synopsis={description}
+              currentThumbnail={posterPreview}
+              onGenerated={() => onSaved()}
+              table={contentType}
+            />
           </div>
 
           <Button onClick={handleSave} disabled={saving || !title} className="w-full">

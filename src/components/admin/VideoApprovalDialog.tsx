@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import { Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import AdminDialog from './AdminDialog';
 import StatusBadge from './StatusBadge';
+import PosterGenerator from '@/components/PosterGenerator';
 
 interface Video {
   id: string;
@@ -125,6 +127,32 @@ const VideoApprovalDialog = ({ video, open, onOpenChange, onAction }: VideoAppro
             {video.director && <p className="font-heading text-sm text-gray-600 uppercase">{video.director}</p>}
             <p className="font-sans text-sm text-gray-600 line-clamp-7">{video.synopsis || 'No synopsis provided.'}</p>
           </div>
+        </div>
+
+        {/* AI Poster Generator */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <p className="font-heading text-sm text-gray-600 uppercase mb-2">AI Poster Generator</p>
+          <PosterGenerator
+            videoId={video.id}
+            videoTitle={video.title}
+            synopsis={video.synopsis}
+            currentThumbnail={thumbSrc}
+            onGenerated={() => onAction()}
+            table="videos"
+          />
+        </div>
+
+        {/* Featured toggle */}
+        <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-3">
+          <Switch
+            checked={(video as any).featured || false}
+            onCheckedChange={async (checked) => {
+              await supabase.from('videos').update({ featured: checked } as any).eq('id', video.id);
+              toast.success(checked ? 'Marked as featured' : 'Removed from featured');
+              onAction();
+            }}
+          />
+          <span className="font-heading text-sm text-gray-600 uppercase">Featured on Homepage</span>
         </div>
 
         {/* Bottom action buttons */}
