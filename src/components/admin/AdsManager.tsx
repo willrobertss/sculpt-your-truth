@@ -251,15 +251,15 @@ const AdsManager = () => {
             </Select>
           </div>
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Select Video</label>
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Select Video</label>
             <Input
               placeholder="Search videos..."
               value={videoSearch}
               onChange={e => setVideoSearch(e.target.value)}
-              className="border-gray-300 mb-2"
+              className="border-gray-600 bg-noir-light text-white placeholder:text-gray-500 mb-2"
             />
             <Select value={assignVideoId} onValueChange={setAssignVideoId}>
-              <SelectTrigger className="border-gray-300"><SelectValue placeholder="Choose a video" /></SelectTrigger>
+              <SelectTrigger className="border-gray-600 bg-noir-light text-white"><SelectValue placeholder="Choose a video" /></SelectTrigger>
               <SelectContent>
                 {opVideos
                   .filter(v => !videoSearch || v.title.toLowerCase().includes(videoSearch.toLowerCase()) || String(v.id).includes(videoSearch))
