@@ -233,6 +233,12 @@ const SocialSpotlight = ({
           </div>
         </div>
       </div>
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        shareUrl={shareUrl}
+        videoTitle={videoTitle}
+      />
     </div>
   );
 };
