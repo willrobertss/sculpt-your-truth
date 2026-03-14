@@ -157,19 +157,37 @@ const FilmDetail = () => {
 
       <section className="py-12">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div className="md:col-span-2">
-              <h2 className="font-display text-xl font-bold text-foreground mb-4">Synopsis</h2>
-              <p className="font-body text-muted-foreground leading-relaxed">{film.synopsis || film.tagline || 'No synopsis available.'}</p>
-            </div>
-            <div>
-              <h2 className="font-display text-xl font-bold text-foreground mb-4">Credits</h2>
-              <div className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+            <div className="lg:col-span-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div className="md:col-span-2">
+                  <h2 className="font-display text-xl font-bold text-foreground mb-4">Synopsis</h2>
+                  <p className="font-body text-muted-foreground leading-relaxed">{film.synopsis || film.tagline || 'No synopsis available.'}</p>
+                </div>
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">Creator</span>
-                  <Link to={`/creators/${creatorSlug}`} className="block text-sm text-foreground hover:text-primary transition-colors">{creatorName}</Link>
+                  <h2 className="font-display text-xl font-bold text-foreground mb-4">Credits</h2>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-primary">Creator</span>
+                      <Link to={`/creators/${creatorSlug}`} className="block text-sm text-foreground hover:text-primary transition-colors">{creatorName}</Link>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+            <div className="lg:col-span-1">
+              <SocialSpotlight
+                videoId={id!}
+                userId={userId}
+                liked={liked}
+                likeCount={likeCount}
+                comments={comments}
+                shareUrl={window.location.href}
+                videoTitle={film.title}
+                onLikeToggle={handleLike}
+                onCommentAdd={(comment) => setComments(prev => [...prev, comment])}
+                onCommentDelete={(commentId) => handleDeleteComment(commentId)}
+              />
             </div>
           </div>
         </div>
