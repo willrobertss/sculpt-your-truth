@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share2, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SocialSpotlight from '@/components/SocialSpotlight';
 import { opprimeClient, getVideoUrl, getThumbnailUrl } from '@/lib/opprime-client';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
 interface Video {
@@ -32,8 +30,6 @@ const Watch = () => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<any[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
 
   // Get current user
   useEffect(() => {
@@ -114,32 +110,15 @@ const Watch = () => {
     }
   };
 
-  const handleComment = async () => {
-    if (!userId) { toast.error('Sign in to comment'); return; }
-    if (!id || !newComment.trim()) return;
-    setSubmittingComment(true);
-    const { data, error } = await supabase.from('video_comments').insert({
-      video_id: id,
-      user_id: userId,
-      content: newComment.trim(),
-    }).select().single();
-    setSubmittingComment(false);
-    if (error) { toast.error('Failed to post comment'); return; }
-    setComments(prev => [...prev, data]);
-    setNewComment('');
-  };
-
   const handleDeleteComment = async (commentId: string) => {
     await supabase.from('video_comments').delete().eq('id', commentId);
     setComments(prev => prev.filter(c => c.id !== commentId));
   };
 
-  const handleShare = () => {
+  const shareUrl = (() => {
     const trailerUrl = (video as any)?.trailer_url;
-    const shareUrl = trailerUrl || window.location.href;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Link copied to clipboard!');
-  };
+    return trailerUrl || window.location.href;
+  })();
 
   if (loading) {
     return (
@@ -229,78 +208,18 @@ const Watch = () => {
             )}
           </div>
 
-          {/* Right: Social Sidebar (25%) */}
-          <div className="lg:w-1/4 lg:min-w-[280px] flex flex-col border border-border rounded-sm bg-card/50">
-            {/* Like + Share bar */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <button
-                onClick={handleLike}
-                className={`flex items-center gap-2 transition-colors ${liked ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
-                <span className="font-mono text-xs">{likeCount}</span>
-              </button>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MessageCircle size={16} />
-                <span className="font-mono text-xs">{comments.length}</span>
-              </div>
-              <button onClick={handleShare} className="text-muted-foreground hover:text-foreground transition-colors">
-                <Share2 size={18} />
-              </button>
-            </div>
-
-            {/* Comments */}
-            <div className="flex-1 flex flex-col min-h-0">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground px-4 pt-3 pb-2">Comments</p>
-              <ScrollArea className="flex-1 max-h-[400px] lg:max-h-[50vh]">
-                <div className="px-4 space-y-3 pb-3">
-                  {comments.length === 0 && (
-                    <p className="text-muted-foreground text-xs font-mono py-4 text-center">No comments yet. Be the first!</p>
-                  )}
-                  {comments.map((c) => (
-                    <div key={c.id} className="group">
-                      <div className="flex justify-between items-start gap-2">
-                        <p className="text-foreground text-sm leading-relaxed break-words flex-1">{c.content}</p>
-                        {c.user_id === userId && (
-                          <button
-                            onClick={() => handleDeleteComment(c.id)}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        )}
-                      </div>
-                      <p className="font-mono text-[10px] text-muted-foreground mt-1">
-                        {new Date(c.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-
-              {/* Comment input */}
-              <div className="p-3 border-t border-border">
-                <div className="flex gap-2">
-                  <Input
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder={userId ? "Add a comment..." : "Sign in to comment"}
-                    disabled={!userId || submittingComment}
-                    onKeyDown={(e) => e.key === 'Enter' && handleComment()}
-                    className="text-sm"
-                  />
-                  <Button
-                    onClick={handleComment}
-                    disabled={!userId || !newComment.trim() || submittingComment}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <Send size={16} />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Right: Social Spotlight */}
+          <SocialSpotlight
+            videoId={id!}
+            userId={userId}
+            liked={liked}
+            likeCount={likeCount}
+            comments={comments}
+            shareUrl={shareUrl}
+            onLikeToggle={handleLike}
+            onCommentAdd={(comment) => setComments(prev => [...prev, comment])}
+            onCommentDelete={(commentId) => handleDeleteComment(commentId)}
+          />
         </div>
       </div>
 
