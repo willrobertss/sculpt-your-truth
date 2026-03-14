@@ -221,6 +221,7 @@ const Watch = () => {
             likeCount={likeCount}
             comments={comments}
             shareUrl={shareUrl}
+            videoTitle={video.title}
             onLikeToggle={handleLike}
             onCommentAdd={(comment) => setComments(prev => [...prev, comment])}
             onCommentDelete={(commentId) => handleDeleteComment(commentId)}
