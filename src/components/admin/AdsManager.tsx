@@ -227,8 +227,8 @@ const AdsManager = () => {
             <Input type="number" value={uploadDuration} onChange={e => setUploadDuration(Number(e.target.value))} min={5} max={120} className="border-gray-600 bg-noir-light text-white" />
           </div>
           <div>
-            <label className="font-heading text-xs uppercase tracking-wider text-gray-500 block mb-1">Video File</label>
-            <input ref={fileRef} type="file" accept="video/*" onChange={e => setUploadFile(e.target.files?.[0] || null)} className="font-sans text-sm" />
+            <label className="font-heading text-xs uppercase tracking-wider text-gray-400 block mb-1">Video File</label>
+            <input ref={fileRef} type="file" accept="video/*" onChange={e => setUploadFile(e.target.files?.[0] || null)} className="font-sans text-sm text-white" />
           </div>
           <Button onClick={handleUpload} disabled={uploading} className="w-full bg-black text-white hover:bg-gray-800 font-heading text-xs uppercase tracking-widest">
             {uploading ? 'Uploading...' : 'Upload Ad'}
