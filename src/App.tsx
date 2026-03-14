@@ -39,6 +39,7 @@ const App = () => (
           <Route path="/verticals" element={<Verticals />} />
           <Route path="/ref/:slug" element={<ReferralLanding />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/watch/:id" element={<Watch />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
