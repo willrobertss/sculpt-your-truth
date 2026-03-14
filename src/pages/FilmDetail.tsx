@@ -19,6 +19,19 @@ const FilmDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
 
+  // Social state
+  const [userId, setUserId] = useState<string | null>(null);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState<any[]>([]);
+
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase.from('films').select('*').eq('id', id).single();
@@ -36,6 +49,41 @@ const FilmDetail = () => {
     };
     load();
   }, [id]);
+
+  // Fetch likes & comments for this film
+  useEffect(() => {
+    if (!id) return;
+    supabase.from('video_likes').select('id', { count: 'exact' }).eq('video_id', id).then(({ count }) => {
+      setLikeCount(count || 0);
+    });
+    if (userId) {
+      supabase.from('video_likes').select('id').eq('video_id', id).eq('user_id', userId).then(({ data }) => {
+        setLiked(!!(data && data.length > 0));
+      });
+    }
+    supabase.from('video_comments').select('*').eq('video_id', id).order('created_at', { ascending: true }).then(({ data }) => {
+      setComments(data || []);
+    });
+  }, [id, userId]);
+
+  const handleLike = async () => {
+    if (!userId) { toast.error('Sign in to like'); return; }
+    if (!id) return;
+    if (liked) {
+      await supabase.from('video_likes').delete().eq('video_id', id).eq('user_id', userId);
+      setLiked(false);
+      setLikeCount(c => Math.max(0, c - 1));
+    } else {
+      await supabase.from('video_likes').insert({ video_id: id, user_id: userId });
+      setLiked(true);
+      setLikeCount(c => c + 1);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    await supabase.from('video_comments').delete().eq('id', commentId);
+    setComments(prev => prev.filter(c => c.id !== commentId));
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
