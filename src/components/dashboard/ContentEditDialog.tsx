@@ -253,7 +253,12 @@ const ContentEditDialog = ({ open, onClose, item, contentType, userId, onSaved }
               videoTitle={title}
               synopsis={description}
               currentThumbnail={posterPreview}
-              onGenerated={() => onSaved()}
+              onGenerated={(url) => {
+                setPosterPreview(url + '?t=' + Date.now());
+                // Update DB with poster URL
+                const urlCol = contentType === 'films' ? 'poster_url' : 'thumbnail_url';
+                supabase.from(contentType).update({ [urlCol]: url }).eq('id', item.id).then(() => onSaved());
+              }}
               table={contentType}
             />
           </div>
