@@ -47,12 +47,24 @@ interface OPSeries {
   title: string;
 }
 
+interface Vertical {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  genre: string[] | null;
+  status: string;
+}
+
+const VERTICAL_GENRES = ['Drama', 'Comedy'];
+
 const Index = () => {
   const [email, setEmail] = useState('');
   const [testimonials, setTestimonials] = useState<Array<{ id: string; name: string; role: string; quote: string; avatar_url: string | null; rating: number }>>([]);
   const [videos, setVideos] = useState<OPVideo[]>([]);
   const [genres, setGenres] = useState<OPGenre[]>([]);
   const [series, setSeries] = useState<OPSeries[]>([]);
+  const [verticals, setVerticals] = useState<Vertical[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,11 +73,13 @@ const Index = () => {
       opprimeClient.from('videos').select('*'),
       opprimeClient.from('genres').select('*'),
       opprimeClient.from('series').select('*'),
-    ]).then(([t, v, g, s]) => {
+      supabase.from('verticals').select('*').eq('status', 'live'),
+    ]).then(([t, v, g, s, vt]) => {
       if (t.data) setTestimonials(t.data);
       if (v.data) setVideos(v.data as OPVideo[]);
       if (g.data) setGenres(g.data as OPGenre[]);
       if (s.data) setSeries(s.data as OPSeries[]);
+      if (vt.data) setVerticals(vt.data as Vertical[]);
     });
   }, []);
 
