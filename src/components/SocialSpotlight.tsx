@@ -27,6 +27,7 @@ const SocialSpotlight = ({
   likeCount,
   comments,
   shareUrl,
+  videoTitle,
   onLikeToggle,
   onCommentAdd,
   onCommentDelete,
@@ -34,6 +35,7 @@ const SocialSpotlight = ({
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [heartAnimating, setHeartAnimating] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleLike = () => {
     if (!userId) {
