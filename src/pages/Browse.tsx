@@ -3,37 +3,47 @@ import { motion } from 'framer-motion';
 import { Search, Grid3X3, List } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import FilmCard from '@/components/FilmCard';
+import VideoHoverCard from '@/components/VideoHoverCard';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
-import { genres } from '@/lib/mock-data';
+import { opprimeClient, getThumbnailUrl } from '@/lib/opprime-client';
+
+interface OPGenre {
+  id: string;
+  name: string;
+}
 
 const Browse = () => {
   const [search, setSearch] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [films, setFilms] = useState<any[]>([]);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [genres, setGenres] = useState<OPGenre[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from('films')
-      .select('id, title, tagline, genre, duration_minutes, release_year, poster_url, banner_url, status, featured, view_count, slug')
-      .eq('status', 'live')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setFilms(data || []);
-        setLoading(false);
-      });
+    Promise.all([
+      opprimeClient.from('videos').select('*'),
+      opprimeClient.from('genres').select('*'),
+    ]).then(([vRes, gRes]) => {
+      setVideos(vRes.data || []);
+      setGenres(gRes.data || []);
+      setLoading(false);
+    });
   }, []);
 
+  const genreMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    genres.forEach((g) => (m[g.id] = g.name));
+    return m;
+  }, [genres]);
+
   const filtered = useMemo(() => {
-    return films.filter((f) => {
-      const matchSearch = !search || f.title.toLowerCase().includes(search.toLowerCase());
-      const matchGenre = !selectedGenre || (f.genre || []).includes(selectedGenre);
+    return videos.filter((v) => {
+      const matchSearch = !search || v.title?.toLowerCase().includes(search.toLowerCase());
+      const matchGenre = !selectedGenre || v.genre_id === selectedGenre;
       return matchSearch && matchGenre;
     });
-  }, [search, selectedGenre, films]);
+  }, [search, selectedGenre, videos]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,7 +62,7 @@ const Browse = () => {
             <div className="relative flex-1 max-w-sm">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search films..."
+                placeholder="Search videos..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 bg-surface border-border h-10"
@@ -67,15 +77,15 @@ const Browse = () => {
               >
                 All
               </button>
-              {genres.slice(0, 8).map((g) => (
+              {genres.map((g) => (
                 <button
-                  key={g}
-                  onClick={() => setSelectedGenre(g === selectedGenre ? null : g)}
+                  key={g.id}
+                  onClick={() => setSelectedGenre(g.id === selectedGenre ? null : g.id)}
                   className={`font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-sm transition-colors ${
-                    selectedGenre === g ? 'bg-primary text-primary-foreground' : 'gold-border text-muted-foreground hover:text-primary'
+                    selectedGenre === g.id ? 'bg-primary text-primary-foreground' : 'gold-border text-muted-foreground hover:text-primary'
                   }`}
                 >
-                  {g}
+                  {g.name}
                 </button>
               ))}
             </div>
@@ -103,26 +113,33 @@ const Browse = () => {
               : 'flex flex-col gap-3'
             }
           >
-            {filtered.map((film, i) => (
+            {filtered.map((video, i) => (
               <motion.div
-                key={film.id}
+                key={video.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: i * 0.03 }}
               >
                 {viewMode === 'grid' ? (
-                  <FilmCard id={film.id} title={film.title} genre={film.genre || []} poster_url={film.poster_url || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=600&fit=crop'} release_year={film.release_year} duration_minutes={film.duration_minutes} />
+                  <VideoHoverCard
+                    id={video.id}
+                    title={video.title}
+                    thumbnail={video.thumbnail}
+                    poster_url={video.poster_url}
+                    synopsis={video.synopsis}
+                    genre_name={genreMap[video.genre_id]}
+                    linkPrefix="/watch"
+                  />
                 ) : (
-                  <div className="flex gap-4 items-center bg-card gold-border rounded-sm p-3 hover:bg-surface-hover transition-colors">
-                    <img src={film.poster_url || ''} alt={film.title} className="w-12 h-18 object-cover rounded-sm" />
+                  <a href={`/watch/${video.id}`} className="flex gap-4 items-center bg-card gold-border rounded-sm p-3 hover:bg-surface-hover transition-colors">
+                    <img src={getThumbnailUrl(video.thumbnail)} alt={video.title} className="w-16 h-10 object-cover rounded-sm" />
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-display text-sm font-semibold text-foreground truncate">{film.title}</h3>
+                      <h3 className="font-display text-sm font-semibold text-foreground truncate">{video.title}</h3>
                       <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-                        {(film.genre || []).join(' · ')} · {film.release_year}
+                        {genreMap[video.genre_id] || 'Uncategorized'}
                       </p>
                     </div>
-                    <span className="font-mono text-[10px] text-muted-foreground">{film.duration_minutes}m</span>
-                  </div>
+                  </a>
                 )}
               </motion.div>
             ))}
@@ -130,7 +147,7 @@ const Browse = () => {
 
           {!loading && filtered.length === 0 && (
             <div className="text-center py-20">
-              <p className="font-display text-lg text-muted-foreground">No films found</p>
+              <p className="font-display text-lg text-muted-foreground">No videos found</p>
             </div>
           )}
         </div>
