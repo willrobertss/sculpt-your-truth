@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import ShareDialog from '@/components/ShareDialog';
 
 interface SocialSpotlightProps {
   videoId: string;
@@ -13,6 +14,7 @@ interface SocialSpotlightProps {
   likeCount: number;
   comments: any[];
   shareUrl: string;
+  videoTitle: string;
   onLikeToggle: () => void;
   onCommentAdd: (comment: any) => void;
   onCommentDelete: (commentId: string) => void;
@@ -25,6 +27,7 @@ const SocialSpotlight = ({
   likeCount,
   comments,
   shareUrl,
+  videoTitle,
   onLikeToggle,
   onCommentAdd,
   onCommentDelete,
@@ -32,6 +35,7 @@ const SocialSpotlight = ({
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [heartAnimating, setHeartAnimating] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleLike = () => {
     if (!userId) {
@@ -69,8 +73,7 @@ const SocialSpotlight = ({
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Link copied to clipboard!');
+    setShareOpen(true);
   };
 
   const getInitials = (userId: string) => {
@@ -230,6 +233,12 @@ const SocialSpotlight = ({
           </div>
         </div>
       </div>
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        shareUrl={shareUrl}
+        videoTitle={videoTitle}
+      />
     </div>
   );
 };

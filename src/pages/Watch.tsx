@@ -171,8 +171,19 @@ const Watch = () => {
                 />
               </div>
             ) : (
-              <div className="aspect-video bg-card rounded-sm flex items-center justify-center gold-border">
-                <p className="text-muted-foreground font-mono text-sm">Video unavailable</p>
+              <div className="aspect-video bg-card rounded-sm overflow-hidden gold-border relative">
+                <img
+                  src={getThumbnailUrl(video.thumbnail)}
+                  alt={video.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                    <span className="text-2xl">🎬</span>
+                  </div>
+                  <p className="text-white font-display text-lg font-semibold">Coming Soon</p>
+                  <p className="text-white/60 font-mono text-xs uppercase tracking-wider">This video is being prepared</p>
+                </div>
               </div>
             )}
 
@@ -221,6 +232,7 @@ const Watch = () => {
             likeCount={likeCount}
             comments={comments}
             shareUrl={shareUrl}
+            videoTitle={video.title}
             onLikeToggle={handleLike}
             onCommentAdd={(comment) => setComments(prev => [...prev, comment])}
             onCommentDelete={(commentId) => handleDeleteComment(commentId)}
