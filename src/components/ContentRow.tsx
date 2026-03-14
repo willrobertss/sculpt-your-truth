@@ -17,7 +17,7 @@ const ContentRow = ({ title, children, viewAllLink }: ContentRowProps) => {
   };
 
   return (
-    <section className="py-4 group/row">
+    <section className="py-4 group/row relative z-0">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg md:text-xl font-bold text-foreground">{title}</h2>
@@ -44,7 +44,7 @@ const ContentRow = ({ title, children, viewAllLink }: ContentRowProps) => {
       </div>
       <div
         ref={scrollRef}
-        className="flex gap-2 overflow-x-auto hide-scrollbar px-6 pb-4"
+        className="flex gap-2 overflow-x-auto overflow-y-visible hide-scrollbar px-6 pb-12"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         <div className="w-[calc((100vw-1400px)/2)] flex-shrink-0 hidden 2xl:block" />

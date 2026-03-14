@@ -38,7 +38,7 @@ const VideoHoverCard = ({ id, title, thumbnail, poster_url, synopsis, genre_name
 
   return (
     <div
-      className={`relative flex-shrink-0 ${cardWidth}`}
+      className={`relative flex-shrink-0 ${cardWidth} ${hovered ? 'z-50' : 'z-0'}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{ scrollSnapAlign: 'start' }}
@@ -48,7 +48,7 @@ const VideoHoverCard = ({ id, title, thumbnail, poster_url, synopsis, genre_name
         className={`relative rounded-md overflow-hidden transition-all duration-300 ${
           hovered ? 'z-30 scale-[1.3] shadow-2xl shadow-black/80' : 'z-10 scale-100'
         }`}
-        style={{ transformOrigin: 'center bottom' }}
+        style={{ transformOrigin: 'center center' }}
       >
         {/* Image */}
         <div className={`${aspectClass} relative`}>
